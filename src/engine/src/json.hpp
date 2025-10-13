@@ -9,29 +9,14 @@ namespace json
 class value;
 class array;
 class object;
+class number;
 
-class number
+class number : public std::variant<long long int, double>
 {
-  public:
-    number(long long int val) : as_int(val), as_float(val) {}
-    number(double val) : as_int(val), as_float(val) {}
-    void operator=(const long long int &other)
-    {
-        as_int = other;
-        as_float = other;
-    }
-    void operator=(const unsigned long long &other)
-    {
-        as_int = other;
-        as_float = other;
-    }
-    void operator=(const double &other)
-    {
-        as_int = other;
-        as_float = other;
-    }
-    long long int as_int;
-    double as_float;
+    public:
+    using base = std::variant<long long int, double>;
+    using base::base;
+    using base::operator=;
 };
 
 class object : public std::unordered_map<std::string, value>
