@@ -45,4 +45,6 @@ class value : public std::variant<array, number, object, std::string>
     using base::operator=;
 };
 
+class value parse(const std::string & text);
+
 }; // namespace json
