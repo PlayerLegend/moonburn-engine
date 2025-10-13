@@ -13,7 +13,7 @@ class number;
 
 class number : public std::variant<long long int, double>
 {
-    public:
+  public:
     using base = std::variant<long long int, double>;
     using base::base;
     using base::operator=;
@@ -21,7 +21,7 @@ class number : public std::variant<long long int, double>
 
 class object : public std::unordered_map<std::string, value>
 {
-    public:
+  public:
     using base = std::unordered_map<std::string, value>;
     using base::base;
     using base::operator=;
@@ -45,6 +45,18 @@ class value : public std::variant<array, number, object, std::string>
     using base::operator=;
 };
 
-class value parse(const std::string & text);
+class exception : std::exception
+{
+  public:
+    unsigned int line;
+    unsigned int col;
+    std::string message;
+    exception(unsigned int _line, unsigned int _col, std::string _message)
+        : line(_line), col(_col), message(_message)
+    {
+    }
+};
+
+class value parse(const std::string &text);
 
 }; // namespace json
