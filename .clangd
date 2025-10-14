@@ -1,4 +1,9 @@
-Diagnostics:
-  ClangTidy:
-    Remove: bugprone-sizeof-expression
-  Suppress: unused-includes
+CompileFlags:
+  # Use C++23 standard
+  Add: [-std=c++23]
+  
+  # Alternatively, you can use the GCC-style flag:
+  # Add: [-std=c++2b]
+  
+  # Remove any existing std flags that might conflict
+  Remove: [-std=*]
