@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <stdint.h>
-#include <format>
+#include <engine/exception.hpp>
 
 namespace json
 {
@@ -39,20 +39,19 @@ class null
     value operator[](const uint64_t &index);
 };
 
-class exception : std::exception
+class exception : engine::exception
 {
   public:
     json::location location;
-    std::string message;
     exception(std::string _filepath,
               unsigned int _line,
               unsigned int _col,
               std::string _message)
-        : location(_filepath, _line, _col), message(_message)
+        : engine::exception(_message), location(_filepath, _line, _col)
     {
     }
     exception(json::location _location, std::string _message)
-        : location(_location), message(_message)
+        : engine::exception(_message), location(_location)
     {
     }
     std::string pretty_text()
