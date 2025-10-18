@@ -26,12 +26,13 @@ class exception : engine::exception
     exception(const std::string &_message) : engine::exception(_message) {}
 };
 
-class rgba32 : std::vector<pixel::rgba32>
+class rgba32
 {
+  std::vector<pixel::rgba32> contents;
   public:
-    rgba32(const uint8_t * begin, const uint8_t * end);
     uint16_t width;
     uint16_t height;
+    rgba32(const uint8_t * begin, const uint8_t * end);
 };
 
 class rgb24 : std::vector<pixel::rgb24>
