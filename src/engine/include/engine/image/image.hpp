@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <vector>
 #include <engine/exception.hpp>
+#include <engine/memory.hpp>
 
 namespace pixel
 {
@@ -28,17 +29,21 @@ class exception : engine::exception
 
 class rgba32
 {
-  std::vector<pixel::rgba32> contents;
+    std::vector<pixel::rgba32> contents;
+
   public:
     uint16_t width;
     uint16_t height;
-    rgba32(const uint8_t * begin, const uint8_t * end);
+    rgba32(const engine::memory::const_view input);
 };
 
-class rgb24 : std::vector<pixel::rgb24>
+class rgb24
 {
+    std::vector<pixel::rgba32> contents;
+
   public:
-    rgb24(const std::vector<uint8_t> &input); // initialize from png binary data
+    rgb24(const engine::memory::const_view
+              input); // initialize from png binary data
     uint16_t width;
     uint16_t height;
     std::vector<pixel::rgb24> pixels;

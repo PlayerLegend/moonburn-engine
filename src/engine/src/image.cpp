@@ -10,7 +10,7 @@
 #ifdef USE_LIBPNG
 #include <png.h>
 
-image::rgb24::rgb24(const std::vector<uint8_t> &input)
+image::rgb24::rgb24(const engine::memory::const_view input)
 {
     png_image image;
 
@@ -19,7 +19,7 @@ image::rgb24::rgb24(const std::vector<uint8_t> &input)
     image.version = PNG_IMAGE_VERSION;
 
     if (_libpng_fail_value ==
-        png_image_begin_read_from_memory(&image, input.data(), input.size()))
+        png_image_begin_read_from_memory(&image, &input.begin[0], input.end - input.begin))
 
     {
         std::string message = image.message;
@@ -33,10 +33,10 @@ image::rgb24::rgb24(const std::vector<uint8_t> &input)
 
     assert(size % 3 == 0);
 
-    resize(size / 3);
+    contents.resize(size / 3);
 
     if (_libpng_fail_value ==
-        png_image_finish_read(&image, NULL, data(), 0, NULL))
+        png_image_finish_read(&image, NULL, contents.data(), 0, NULL))
     {
         throw image::exception("Parsing a PNG image failed");
     }
@@ -45,7 +45,7 @@ image::rgb24::rgb24(const std::vector<uint8_t> &input)
     height = image.height;
 }
 
-image::rgba32::rgba32(const std::vector<uint8_t> &input)
+image::rgba32::rgba32(const engine::memory::const_view input)
 {
     png_image image;
 
@@ -54,7 +54,7 @@ image::rgba32::rgba32(const std::vector<uint8_t> &input)
     image.version = PNG_IMAGE_VERSION;
 
     if (_libpng_fail_value ==
-        png_image_begin_read_from_memory(&image, input.data(), input.size()))
+        png_image_begin_read_from_memory(&image, &input.begin[0], input.end - input.begin))
 
     {
         std::string message = image.message;
@@ -68,10 +68,10 @@ image::rgba32::rgba32(const std::vector<uint8_t> &input)
 
     assert(size % 4 == 0);
 
-    resize(size / 3);
+    contents.resize(size / 3);
 
     if (_libpng_fail_value ==
-        png_image_finish_read(&image, NULL, data(), 0, NULL))
+        png_image_finish_read(&image, NULL, contents.data(), 0, NULL))
     {
         throw image::exception("Parsing a PNG image failed");
     }
