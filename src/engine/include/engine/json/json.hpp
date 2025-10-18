@@ -36,6 +36,7 @@ class null
   public:
     json::location location;
     null(json::location &_location) : location(_location) {}
+    null(){};
     value operator[](const uint64_t &index);
 };
 
@@ -61,43 +62,58 @@ class exception : engine::exception
     }
 };
 
-class string : public std::string
+class string
 {
+    std::string parent;
+
   public:
     json::location location;
     string(const json::location &l) : location(l) {}
-    using base = std::string;
-    using base::base;
+    operator std::string()
+    {
+        return parent;
+    }
+    void push_back(char c)
+    {
+        parent.push_back(c);
+    }
+    bool operator==(const std::string &rhs) const
+    {
+        return parent == rhs;
+    }
+    bool operator==(const string &rhs) const
+    {
+        return parent == rhs.parent;
+    }
 };
 
-class number : public std::variant<number_int, number_float>
+class number
 {
+    std::variant<number_int, number_float> contents;
+
   public:
     json::location location;
-    using base = std::variant<number_int, number_float>;
-    using base::base;
-    using base::operator=;
     number(number_float n)
     {
-        this->base::operator=(n);
+        contents = n;
     }
     number(number_int n)
     {
-        this->base::operator=(n);
+        contents = n;
     }
     number operator*(number_int rhs) const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return static_cast<number_float>(*this) * (number_float)rhs;
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents) * (number_float)rhs;
         else
-            return static_cast<number_int>(*this) * rhs;
+            return std::get<number_int>(this->contents) * (number_int)rhs;
     }
     number operator*(number_float rhs) const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return static_cast<number_float>(*this) * rhs;
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents) * rhs;
         else
-            return static_cast<number_float>(*this) * rhs;
+            return std::get<number_float>(this->contents) * rhs;
     }
     number operator*(int rhs) const
     {
@@ -105,68 +121,68 @@ class number : public std::variant<number_int, number_float>
     }
     number operator-() const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return -static_cast<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return -std::get<number_float>(this->contents);
         else
-            return -static_cast<number_int>(*this);
+            return -std::get<number_int>(this->contents);
     }
     explicit operator number_float() const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return std::get<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents);
         else
-            return std::get<number_int>(*this);
+            return std::get<number_int>(this->contents);
     }
     explicit operator number_int() const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return std::get<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents);
         else
-            return std::get<number_int>(*this);
+            return std::get<number_int>(this->contents);
     }
 
-    number_int convert_int()
+    number_int as_int() const
     {
 
-        if (std::holds_alternative<number_float>(*this))
-            return std::get<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents);
         else
-            return std::get<number_int>(*this);
+            return std::get<number_int>(this->contents);
     }
 
-    number_float convert_float()
+    number_float as_float() const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return std::get<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents);
         else
-            return std::get<number_int>(*this);
+            return std::get<number_int>(this->contents);
     }
 
-    number_int strict_int()
+    number_int strict_int() const
     {
 
-        if (std::holds_alternative<number_int>(*this))
-            return std::get<number_int>(*this);
+        if (std::holds_alternative<number_int>(this->contents))
+            return std::get<number_int>(this->contents);
 
         throw json::exception(location, "Expected an int, not a float");
     }
 
-    number_float strict_float()
+    number_float strict_float() const
     {
-        if (std::holds_alternative<number_float>(*this))
-            return std::get<number_float>(*this);
+        if (std::holds_alternative<number_float>(this->contents))
+            return std::get<number_float>(this->contents);
         throw json::exception(location, "Expected a float, not an int");
     }
 };
 
-class object : public std::unordered_map<std::string, value>
+class object
 {
+    std::unordered_map<std::string, value> contents;
+
   public:
     json::location location;
-    using base = std::unordered_map<std::string, value>;
-    using base::base;
-    using base::operator=;
-    using base::operator[];
+    const value &operator[](const std::string &index);
+    void emplace(const std::string &index, json::value &&value);
 };
 
 class array : public std::vector<value>
@@ -179,90 +195,146 @@ class array : public std::vector<value>
     using base::operator[];
 };
 
-class value : public std::variant<array, number, object, string, null>
+class value
 {
+    std::variant<array, number, object, string, null> contents = null();
+
   public:
     json::location location;
-    using base = std::variant<array, number, object, string, null>;
-    using base::base;
-    using base::operator=;
 
+    bool operator==(const string &str) const
+    {
+
+        if (std::holds_alternative<string>(this->contents))
+            return std::get<string>(this->contents) == str;
+        return false;
+    }
+
+    value operator=(const array &&other)
+    {
+        this->contents = std::move(other);
+        return *this;
+    };
+
+    value operator=(const array &other)
+    {
+        this->contents = other;
+        return *this;
+    };
+
+    value operator=(const number &other)
+    {
+        this->contents = other;
+        return *this;
+    };
+    value operator=(const object &other)
+    {
+        this->contents = other;
+        return *this;
+    };
+    value operator=(const string &other)
+    {
+        this->contents = other;
+        return *this;
+    };
+
+    value operator=(const null &other)
+    {
+        this->contents = other;
+        return *this;
+    };
+
+    value operator=(const value &other)
+    {
+        if (this != &other)
+            *this = other;
+        return *this;
+    };
+    value() {}
+    value(const array &&other) : contents(std::move(other)) {}
+    value(const string &&other) : contents(std::move(other)) {}
+    value(const object &&other) : contents(std::move(other)) {}
+    value(const array &other) : contents(other) {}
+    value(const string &other) : contents(other) {}
+    value(const object &other) : contents(other) {}
+    value(const number &other) : contents(other) {}
+    value(const null &other) : contents(other) {}
     value operator[](const std::string &index)
     {
-        if (std::holds_alternative<object>(*this))
-            return std::get<object>(*this)[index];
+        if (std::holds_alternative<object>(this->contents))
+            return std::get<object>(this->contents)[index];
         return json::null(location);
     }
     value operator[](const uint64_t &index)
     {
-        if (std::holds_alternative<array>(*this))
-            return std::get<array>(*this)[index];
+        if (std::holds_alternative<array>(this->contents))
+            return std::get<array>(this->contents)[index];
         return json::null(location);
     }
-    bool operator==(const std::string &rhs)
+    bool operator==(const std::string &rhs) const
     {
-        if (std::holds_alternative<string>(*this))
-            return std::get<string>(*this) == rhs;
+        if (std::holds_alternative<string>(this->contents))
+            return std::get<string>(this->contents) == rhs;
 
         return false;
     }
 
     operator object()
     {
-        if (std::holds_alternative<object>(*this))
-            return std::get<object>(*this);
+        if (std::holds_alternative<object>(this->contents))
+            return std::get<object>(this->contents);
         throw json::exception(location, "Expected an object");
     }
 
     operator array()
     {
-        if (std::holds_alternative<array>(*this))
-            return std::get<array>(*this);
+        if (std::holds_alternative<array>(this->contents))
+            return std::get<array>(this->contents);
         throw json::exception(location, "Expected an array");
     }
 
     operator number()
     {
-        if (std::holds_alternative<number>(*this))
-            return std::get<number>(*this);
+        if (std::holds_alternative<number>(this->contents))
+            return std::get<number>(this->contents);
         throw json::exception(location, "Expected a number");
     }
 
     operator string()
     {
-        if (std::holds_alternative<string>(*this))
-            return std::get<string>(*this);
+        if (std::holds_alternative<string>(this->contents))
+            return std::get<string>(this->contents);
         throw json::exception(location, "Expected a string");
     }
 
-    number_int convert_int()
+    number_int as_int() const
     {
-        if (std::holds_alternative<number>(*this))
-            return std::get<number>(*this).convert_int();
+        if (std::holds_alternative<number>(this->contents))
+            return std::get<number>(this->contents).as_int();
 
         throw json::exception(location, "Expected a number");
     }
 
-    number_float convert_float()
+    number_float as_float() const
     {
-        if (std::holds_alternative<number>(*this))
-            return std::get<number>(*this).convert_float();
+        if (std::holds_alternative<number>(this->contents))
+            return std::get<number>(this->contents).as_float();
 
         throw json::exception(location, "Expected a number");
     }
 
-    number_int strict_int()
+    number_int strict_int() const
     {
-        if (std::holds_alternative<number>(*this))
-            return std::get<number>(*this).strict_int();
+        if (std::holds_alternative<number>(this->contents))
+            return std::get<number>(this->contents).strict_int();
 
         throw json::exception(location, "Expected a number");
     }
 
-    number_float strict_float()
+    number_float strict_float() const
     {
-        if (std::holds_alternative<number>(*this))
-            return std::get<number>(*this).strict_float();
+        if (std::holds_alternative<number>(this->contents))
+            return std::get<number>(this->contents).strict_float();
 
         throw json::exception(location, "Expected a number");
     }
@@ -270,5 +342,4 @@ class value : public std::variant<array, number, object, string, null>
 
 value parse(const std::string &name, const std::string &text);
 value parse_file(const std::string &name);
-
 }; // namespace json

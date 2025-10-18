@@ -3,8 +3,17 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <assert.h>
-#include <iostream>
 #include <string>
+
+void json::object::emplace(const std::string &index, json::value &&value)
+{
+    this->contents.emplace(index, value);
+}
+
+const json::value &json::object::operator[](const std::string &index)
+{
+    return contents[index];
+}
 
 class state
 {

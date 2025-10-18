@@ -16,7 +16,6 @@ struct rgb24
 {
     uint8_t r, g, b;
 };
-
 }; // namespace pixel
 
 namespace image
