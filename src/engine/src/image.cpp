@@ -2,8 +2,7 @@
 #include <string.h>
 #include <string>
 #include <assert.h>
-
-#define USE_LIBPNG
+#include <fstream>
 
 #define _libpng_fail_value 0
 
@@ -19,7 +18,9 @@ image::rgb24::rgb24(const engine::memory::const_view input)
     image.version = PNG_IMAGE_VERSION;
 
     if (_libpng_fail_value ==
-        png_image_begin_read_from_memory(&image, &input.begin[0], input.end - input.begin))
+        png_image_begin_read_from_memory(&image,
+                                         &input.begin[0],
+                                         input.end - input.begin))
 
     {
         std::string message = image.message;
@@ -54,7 +55,9 @@ image::rgba32::rgba32(const engine::memory::const_view input)
     image.version = PNG_IMAGE_VERSION;
 
     if (_libpng_fail_value ==
-        png_image_begin_read_from_memory(&image, &input.begin[0], input.end - input.begin))
+        png_image_begin_read_from_memory(&image,
+                                         &input.begin[0],
+                                         input.end - input.begin))
 
     {
         std::string message = image.message;
@@ -79,5 +82,24 @@ image::rgba32::rgba32(const engine::memory::const_view input)
     width = image.width;
     height = image.height;
 }
+
+static engine::memory::allocation file_binary(const std::string &file_path)
+{
+    std::ifstream stream(file_path);
+
+    if (stream)
+    {
+        engine::memory::allocation result;
+        stream.seekg(0, stream.end);
+        result.resize(stream.tellg());
+        stream.seekg(0, stream.beg);
+        stream.read((char *)result.data(), result.size());
+        return result;
+    }
+
+    throw(errno);
+}
+image::rgba32::rgba32(const std::string &path) : rgba32(file_binary(path)) {}
+image::rgb24::rgb24(const std::string &path) : rgb24(file_binary(path)) {}
 
 #endif // USE_LIBPNG

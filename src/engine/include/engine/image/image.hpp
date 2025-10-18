@@ -35,6 +35,7 @@ class rgba32
     uint16_t width;
     uint16_t height;
     rgba32(const engine::memory::const_view input);
+    rgba32(const std::string & path);
 };
 
 class rgb24
@@ -44,6 +45,7 @@ class rgb24
   public:
     rgb24(const engine::memory::const_view
               input); // initialize from png binary data
+    rgb24(const std::string & path);
     uint16_t width;
     uint16_t height;
     std::vector<pixel::rgb24> pixels;

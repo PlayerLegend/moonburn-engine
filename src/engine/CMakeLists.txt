@@ -42,12 +42,33 @@ find_library(sdl2 SDL2)
 # )
 
 # ===
+# External libs
+
+find_library(libpng png)
+if(libpng)
+    add_definitions(-DUSE_LIBPNG)
+    target_link_libraries(engine PUBLIC ${libpng})
+endif()
+
+find_library(libjpeg jpeg)
+if(libjpeg)
+    add_definitions(-DUSE_LIBJPEG)
+    target_link_libraries(engine PUBLIC ${libjpeg})
+endif()
+
+find_library(zlib z)
+if(zlib)
+    target_link_libraries(engine PUBLIC ${zlib})
+endif()
+
+# ===
 # Finish
 
 target_include_directories(engine PUBLIC include)
 
 target_sources(engine PRIVATE
 	  src/json.cpp
+      src/image.cpp
 )
 
 # ===
@@ -56,4 +77,5 @@ target_sources(engine PRIVATE
 include(CTest)
 enable_testing()
 add_subdirectory(test/json.base)
+add_subdirectory(test/image.load.png)
 # add_subdirectory(bsp/test/viewer)
