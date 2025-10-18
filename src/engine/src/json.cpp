@@ -5,16 +5,6 @@
 #include <assert.h>
 #include <string>
 
-void json::object::emplace(const std::string &index, json::value &&value)
-{
-    this->contents.emplace(index, value);
-}
-
-const json::value &json::object::operator[](const std::string &index)
-{
-    return contents[index];
-}
-
 class state
 {
   public:
@@ -103,7 +93,7 @@ static json::string parse_string(state &state)
     if (state.next() != '"')
         throw state.get_exception("Expected a string");
 
-    json::string result(state.location);
+    json::string result;
 
     bool escape = false;
 
@@ -387,6 +377,7 @@ static json::object parse_object(state &state)
 
 static json::value parse_value(state &state)
 {
+
     while (state.skip_whitespace())
     {
         char c = state.peek();

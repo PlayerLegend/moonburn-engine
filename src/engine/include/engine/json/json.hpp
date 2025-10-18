@@ -10,8 +10,6 @@ namespace json
 
 class location;
 class value;
-class array;
-class object;
 class number;
 
 typedef long long int number_int;
@@ -62,30 +60,7 @@ class exception : engine::exception
     }
 };
 
-class string
-{
-    std::string parent;
-
-  public:
-    json::location location;
-    string(const json::location &l) : location(l) {}
-    operator std::string()
-    {
-        return parent;
-    }
-    void push_back(char c)
-    {
-        parent.push_back(c);
-    }
-    bool operator==(const std::string &rhs) const
-    {
-        return parent == rhs;
-    }
-    bool operator==(const string &rhs) const
-    {
-        return parent == rhs.parent;
-    }
-};
+using string = std::string;
 
 class number
 {
@@ -175,25 +150,9 @@ class number
     }
 };
 
-class object
-{
-    std::unordered_map<std::string, value> contents;
+using object = std::unordered_map<std::string, value>;
 
-  public:
-    json::location location;
-    const value &operator[](const std::string &index);
-    void emplace(const std::string &index, json::value &&value);
-};
-
-class array : public std::vector<value>
-{
-  public:
-    json::location location;
-    using base = std::vector<value>;
-    using base::base;
-    using base::operator=;
-    using base::operator[];
-};
+using array = std::vector<value>;
 
 class value
 {
@@ -270,13 +229,6 @@ class value
         if (std::holds_alternative<array>(this->contents))
             return std::get<array>(this->contents)[index];
         return json::null(location);
-    }
-    bool operator==(const std::string &rhs) const
-    {
-        if (std::holds_alternative<string>(this->contents))
-            return std::get<string>(this->contents) == rhs;
-
-        return false;
     }
 
     operator object()
