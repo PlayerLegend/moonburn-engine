@@ -1,5 +1,5 @@
 #include <fstream>
-#include <engine/json/json.hpp>
+#include <engine/json.hpp>
 #include <ctype.h>
 #include <stdint.h>
 #include <assert.h>
@@ -428,4 +428,11 @@ static std::string file_string(const std::string &file_path)
 json::value json::parse_file(const std::string &name)
 {
     return parse(name, file_string(name));
+}
+
+json::value json::parse_memory(const std::string &name,
+                               engine::memory::const_view input)
+{
+    std::string text((const char *)&input.begin[0], input.end - input.begin);
+    return json::parse(name, text);
 }

@@ -1,5 +1,6 @@
 #include <vector>
 #include <stdint.h>
+#include <string>
 
 namespace engine
 {
@@ -21,6 +22,11 @@ class const_view
         : begin(parent.begin()), end(parent.end())
     {
     }
+    const_view(const uint8_t *data, size_t size)
+        : begin(data), end(data + size)
+    {
+    }
 };
+allocation from_file(const std::string &path);
 }; // namespace memory
 }; // namespace engine

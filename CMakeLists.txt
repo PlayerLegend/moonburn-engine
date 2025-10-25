@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.0)
 
-project(fastgame VERSION 1.0
+project(tagcpp VERSION 1.0
                   DESCRIPTION "moonburn"
                   LANGUAGES CXX)
 

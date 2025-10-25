@@ -66,16 +66,15 @@ endif()
 
 target_include_directories(engine PUBLIC include)
 
-target_sources(engine PRIVATE
-	  src/json.cpp
-      src/image.cpp
-)
-
 # ===
 # Testing
 
 include(CTest)
 enable_testing()
-add_subdirectory(test/json.base)
-add_subdirectory(test/image.load.png)
+add_subdirectory(basics)
+add_subdirectory(json)
+add_subdirectory(image)
+add_subdirectory(vec)
+add_subdirectory(gltf)
+add_subdirectory(filesystem)
 # add_subdirectory(bsp/test/viewer)

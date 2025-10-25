@@ -1,9 +1,13 @@
+#ifndef FLAT_INCLUDES
+#define FLAT_INCLUDES
 #include <string>
 #include <variant>
 #include <vector>
 #include <unordered_map>
 #include <stdint.h>
 #include <engine/exception.hpp>
+#include <engine/memory.hpp>
+#endif
 
 namespace json
 {
@@ -34,7 +38,7 @@ class null
   public:
     json::location location;
     null(json::location &_location) : location(_location) {}
-    null(){};
+    null() {};
     value operator[](const uint64_t &index);
 };
 
@@ -88,7 +92,7 @@ class number
         if (std::holds_alternative<number_float>(this->contents))
             return std::get<number_float>(this->contents) * rhs;
         else
-            return std::get<number_float>(this->contents) * rhs;
+            return std::get<number_int>(this->contents) * rhs;
     }
     number operator*(int rhs) const
     {
@@ -293,5 +297,6 @@ class value
 };
 
 value parse(const std::string &name, const std::string &text);
+value parse_memory(const std::string &name, engine::memory::const_view input);
 value parse_file(const std::string &name);
 }; // namespace json

@@ -1,4 +1,4 @@
-#include <engine/image/image.hpp>
+#include <engine/image.hpp>
 #include <string.h>
 #include <string>
 #include <assert.h>

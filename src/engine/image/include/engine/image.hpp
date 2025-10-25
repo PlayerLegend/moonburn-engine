@@ -1,7 +1,10 @@
+#ifndef FLAT_INCLUDES
+#define FLAT_INCLUDES
 #include <stdint.h>
 #include <vector>
 #include <engine/exception.hpp>
 #include <engine/memory.hpp>
+#endif
 
 namespace pixel
 {
