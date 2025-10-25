@@ -235,28 +235,28 @@ class value
         return json::null(location);
     }
 
-    operator object()
+    operator const object&() const
     {
         if (std::holds_alternative<object>(this->contents))
             return std::get<object>(this->contents);
         throw json::exception(location, "Expected an object");
     }
 
-    operator array()
+    operator const array&() const
     {
         if (std::holds_alternative<array>(this->contents))
             return std::get<array>(this->contents);
         throw json::exception(location, "Expected an array");
     }
 
-    operator number()
+    operator const number&() const
     {
         if (std::holds_alternative<number>(this->contents))
             return std::get<number>(this->contents);
         throw json::exception(location, "Expected a number");
     }
 
-    operator string()
+    operator const string&() const
     {
         if (std::holds_alternative<string>(this->contents))
             return std::get<string>(this->contents);
