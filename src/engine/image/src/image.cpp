@@ -1,8 +1,7 @@
+#include <assert.h>
 #include <engine/image.hpp>
 #include <string.h>
 #include <string>
-#include <assert.h>
-#include <fstream>
 
 #define _libpng_fail_value 0
 
@@ -83,23 +82,18 @@ image::rgba32::rgba32(const engine::memory::const_view input)
     height = image.height;
 }
 
-static engine::memory::allocation file_binary(const std::string &file_path)
-{
-    std::ifstream stream(file_path);
-
-    if (stream)
-    {
-        engine::memory::allocation result;
-        stream.seekg(0, stream.end);
-        result.resize(stream.tellg());
-        stream.seekg(0, stream.beg);
-        stream.read((char *)result.data(), result.size());
-        return result;
-    }
-
-    throw(errno);
-}
-image::rgba32::rgba32(const std::string &path) : rgba32(file_binary(path)) {}
-image::rgb24::rgb24(const std::string &path) : rgb24(file_binary(path)) {}
-
 #endif // USE_LIBPNG
+
+image::rgba32::rgba32(const std::string &path)
+    : rgba32(filesystem::allocation(path)) {};
+
+image::rgb24::rgb24(const std::string &path)
+    : rgb24(filesystem::allocation(path)) {};
+
+template class filesystem::cache<image::rgba32>;
+
+image::rgba32_cache::reference
+image::rgba32_cache::load(const std::string &path)
+{
+    return std::make_shared<filesystem::file<image::rgba32>>(path);
+}

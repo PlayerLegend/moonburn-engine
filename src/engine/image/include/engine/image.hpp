@@ -37,7 +37,7 @@ class rgba32
     uint16_t width;
     uint16_t height;
     rgba32(const engine::memory::const_view input);
-    rgba32(const std::string & path);
+    rgba32(const std::string &path);
 };
 
 class rgb24
@@ -47,9 +47,29 @@ class rgb24
   public:
     rgb24(const engine::memory::const_view
               input); // initialize from png binary data
-    rgb24(const std::string & path);
+    rgb24(const std::string &path);
     uint16_t width;
     uint16_t height;
     std::vector<pixel::rgb24> pixels;
 };
+
+using rgba32_file = filesystem::file<image::rgba32>;
+
+class rgba32_cache : public filesystem::cache<image::rgba32>
+{
+  protected:
+    reference load(const std::string &path) override;
+
+  public:
+    rgba32_cache(class filesystem::whitelist &wl)
+        : filesystem::cache<image::rgba32>(wl)
+    {
+    }
+};
+
 } // namespace image
+
+namespace filesystem
+{
+extern template class filesystem::cache<image::rgba32>;
+} // namespace filesystem
