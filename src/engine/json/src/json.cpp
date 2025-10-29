@@ -1,8 +1,8 @@
-#include <fstream>
-#include <engine/json.hpp>
-#include <ctype.h>
-#include <stdint.h>
 #include <assert.h>
+#include <ctype.h>
+#include <engine/json.hpp>
+#include <fstream>
+#include <stdint.h>
 #include <string>
 
 class state
@@ -292,6 +292,30 @@ static json::number parse_number(state &state)
     return result;
 }
 
+static json::value parse_bool(state &state)
+{
+    char c = state.next();
+
+    if (c != 't' && c != 'f')
+        throw state.get_exception("Expected 'true' or 'false'");
+
+    if (c == 't')
+    {
+        if (state.next() != 'r' || state.next() != 'u' || state.next() != 'e')
+            throw state.get_exception("Invalid token, expected 'true'");
+
+        return true;
+    }
+    else
+    {
+        if (state.next() != 'a' || state.next() != 'l' || state.next() != 's' ||
+            state.next() != 'e')
+            throw state.get_exception("Invalid token, expected 'false'");
+
+        return false;
+    }
+}
+
 static json::array parse_array(state &state)
 {
     if (state.next() != '[')
@@ -391,9 +415,9 @@ static json::value parse_value(state &state)
         if (c == '0')
             return parse_octal(state);
         if (isdigit(c) || c == '-')
-        {
             return parse_number(state);
-        }
+        if (c == 't' || c == 'f')
+            return parse_bool(state);
 
         throw state.get_exception("Unexpected character");
     }

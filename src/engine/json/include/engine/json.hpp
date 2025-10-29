@@ -158,7 +158,7 @@ using array = std::vector<value>;
 
 class value
 {
-    std::variant<array, number, object, string, null> contents = null();
+    std::variant<array, number, object, string, bool, null> contents = null();
 
   public:
     json::location location;
@@ -220,6 +220,7 @@ class value
     value(const object &other) : contents(other) {}
     value(const number &other) : contents(other) {}
     value(const null &other) : contents(other) {}
+    value(const bool &other) : contents(other) {}
     value operator[](const std::string &index)
     {
         if (std::holds_alternative<object>(this->contents))
@@ -233,34 +234,39 @@ class value
         return json::null(location);
     }
 
-    operator const object&() const
+    operator const object &() const
     {
         if (std::holds_alternative<object>(this->contents))
             return std::get<object>(this->contents);
         throw json::exception(location, "Expected an object");
     }
 
-    operator const array&() const
+    operator const array &() const
     {
         if (std::holds_alternative<array>(this->contents))
             return std::get<array>(this->contents);
         throw json::exception(location, "Expected an array");
     }
 
-    operator const number&() const
+    operator const number &() const
     {
         if (std::holds_alternative<number>(this->contents))
             return std::get<number>(this->contents);
         throw json::exception(location, "Expected a number");
     }
 
-    operator const string&() const
+    operator const string &() const
     {
         if (std::holds_alternative<string>(this->contents))
             return std::get<string>(this->contents);
         throw json::exception(location, "Expected a string");
     }
-
+    bool as_bool() const
+    {
+        if (std::holds_alternative<bool>(this->contents))
+            return std::get<bool>(this->contents);
+        throw json::exception(location, "Expected a bool");
+    }
     number_int as_int() const
     {
         if (std::holds_alternative<number>(this->contents))
@@ -297,4 +303,5 @@ class value
 value parse(const std::string &name, const std::string &text);
 value parse_memory(const std::string &name, engine::memory::const_view input);
 value parse_file(const std::string &name);
+
 }; // namespace json
