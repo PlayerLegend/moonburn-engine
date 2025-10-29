@@ -27,6 +27,5 @@ class const_view
     {
     }
 };
-allocation from_file(const std::string &path);
 }; // namespace memory
 }; // namespace engine
