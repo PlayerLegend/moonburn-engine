@@ -109,6 +109,40 @@ class fvec4 : public vec4<float>
     fvec3 operator*(const fvec3 &rhs) const;
 };
 
+template <typename T> class mat4
+{
+  protected:
+    std::array<T, 16> indices;
+
+  public:
+    mat4();
+    using column = std::array<T, 4>;
+    mat4(const column &c0, const column &c1, const column &c2, const column &c3)
+        : indices({c0[0],
+                   c0[1],
+                   c0[2],
+                   c0[3],
+                   c1[0],
+                   c1[1],
+                   c1[2],
+                   c1[3],
+                   c2[0],
+                   c2[1],
+                   c2[2],
+                   c2[3],
+                   c3[0],
+                   c3[1],
+                   c3[2],
+                   c3[3]})
+    {
+    }
+    template <typename... L> mat4(L... ts) : indices{ts...} {};
+    mat4<T> operator*(const mat4<T> &rhs) const;
+    vec4<T> operator*(const vec4<T> &rhs) const;
+};
+
+using fmat4 = mat4<float>;
+
 class transform3
 {
   public:
