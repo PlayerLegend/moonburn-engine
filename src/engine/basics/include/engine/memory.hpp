@@ -23,8 +23,7 @@ class const_view
         : begin(parent.begin()), end(parent.end())
     {
     }
-    const_view(const uint8_t *data, size_t size)
-        : begin(data), end(data + size)
+    const_view(const uint8_t *data, size_t size) : begin(data), end(data + size)
     {
     }
 };
