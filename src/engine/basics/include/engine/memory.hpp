@@ -1,6 +1,7 @@
 #include <vector>
 #include <stdint.h>
 #include <string>
+#pragma once
 
 namespace engine
 {

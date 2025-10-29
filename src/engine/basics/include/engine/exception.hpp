@@ -1,5 +1,6 @@
 #include <exception>
 #include <string>
+#pragma once
 
 namespace engine
 {

@@ -1,3 +1,6 @@
+#pragma once
+#include <array>
+
 namespace vec
 {
 using iscalar = long int;

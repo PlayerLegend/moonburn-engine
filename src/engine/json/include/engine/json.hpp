@@ -1,13 +1,11 @@
-#ifndef FLAT_INCLUDES
-#define FLAT_INCLUDES
-#include <string>
-#include <variant>
-#include <vector>
-#include <unordered_map>
-#include <stdint.h>
+#pragma once
 #include <engine/exception.hpp>
 #include <engine/memory.hpp>
-#endif
+#include <stdint.h>
+#include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace json
 {

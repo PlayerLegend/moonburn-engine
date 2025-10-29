@@ -1,10 +1,12 @@
-#ifndef FLAT_INCLUDES
-#define FLAT_INCLUDES
-#include <string>
+#pragma once
+#include <engine/exception.hpp>
+#include <engine/filesystem.hpp>
+#include <engine/image.hpp>
+#include <engine/json.hpp>
 #include <engine/memory.hpp>
 #include <engine/vec.hpp>
-#include <engine/exception.hpp>
-#endif
+#include <optional>
+#include <string>
 
 namespace gltf
 {

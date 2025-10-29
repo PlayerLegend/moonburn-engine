@@ -1,21 +1,15 @@
-#ifndef FLAT_INCLUDES
-#define FLAT_INCLUDES
-#include <engine/exception.hpp>
-#include <engine/memory.hpp>
-#include <variant>
-#include <unordered_map>
-#include <set>
-#endif
+#pragma once
 
-namespace gltf
-{
-class gltf;
-};
-namespace image
-{
-class rgba32;
-class rgb24;
-}; // namespace image
+#include <assert.h>
+#include <engine/exception.hpp>
+#include <engine/filesystem.hpp>
+#include <engine/memory.hpp>
+#include <filesystem>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <unordered_set>
+
 namespace filesystem
 {
 namespace exception
