@@ -1,66 +1,50 @@
 #include <engine/filesystem.hpp>
-#define FLAT_INCLUDES
-#include <filesystem>
-#include <engine/vec.hpp>
-#include <engine/gltf.hpp>
-#include <engine/image.hpp>
+#include <fstream>
 
-void add_paths_to_set_recursive(std::set<std::string> &set,
-                                const std::string &root)
+engine::memory::allocation from_file(const std::string &file_path)
 {
-    for (const std::filesystem::directory_entry &entry :
-         std::filesystem::recursive_directory_iterator(root))
+    std::ifstream stream(file_path);
+
+    if (stream)
     {
-        if (entry.is_regular_file() || entry.is_symlink())
-            set.insert(std::filesystem::canonical(entry.path()).string());
-    }
-}
-filesystem::cache::cache(const std::vector<std::string> &roots)
-{
-    for (const std::string &root : roots)
-        add_paths_to_set_recursive(this->whitelist, root);
-}
-
-const filesystem::cache::entry &filesystem::cache::get_entry(const std::string &_path)
-{
-    std::filesystem::path path = std::filesystem::canonical(_path);
-
-    if (this->whitelist.find(path.string()) != this->whitelist.end())
-    {
-        active_t::iterator it = this->active.find(path.string());
-
-        if (it != this->active.end())
-        {
-            return it->second;
-        }
-    }
-    throw filesystem::exception::not_found("File not found in filesystem: " +
-                                           path.string());
-}
-
-const engine::memory::allocation &
-filesystem::cache::get_binary(const std::string &_path)
-{
-    std::string path = std::filesystem::canonical(_path).string();
-
-    if (this->whitelist.find(path) != this->whitelist.end())
-    {
-        active_t::iterator it = this->active.find(path);
-
-        if (it != this->active.end())
-        {
-            if (std::holds_alternative<engine::memory::allocation>(it->second))
-            {
-                return std::get<engine::memory::allocation>(it->second);
-            }
-            else
-            {
-                throw filesystem::exception::wrong_type(
-                    "File is not a binary file: " + path);
-            }
-        }
+        engine::memory::allocation result;
+        stream.seekg(0, stream.end);
+        result.resize(stream.tellg());
+        stream.seekg(0, stream.beg);
+        stream.read((char *)result.data(), result.size());
+        return result;
     }
 
-    throw filesystem::exception::not_found("File not found in filesystem: " +
-                                           path);
+    throw(errno);
+}
+
+filesystem::allocation::allocation(const std::string &file_path)
+    : engine::memory::allocation(from_file(file_path))
+{
+}
+
+filesystem::whitelist::whitelist(const std::string &root)
+{
+    add_recursive(root);
+}
+
+void filesystem::whitelist::add(const std::string &path)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    paths.insert(std::filesystem::absolute(path).string());
+}
+
+void filesystem::whitelist::add_recursive(const std::string &root)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    for (auto &p : std::filesystem::recursive_directory_iterator(root))
+    {
+        paths.insert(std::filesystem::absolute(p.path()).string());
+    }
+}
+
+bool filesystem::whitelist::contains(const std::string &path)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    return paths.find(std::filesystem::absolute(path).string()) != paths.end();
 }
