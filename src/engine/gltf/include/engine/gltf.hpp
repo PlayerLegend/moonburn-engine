@@ -214,10 +214,10 @@ class material
     };
 
     std::string name;
-    pbr_metallic_roughness pbr_metallic_roughness;
-    occlusion_texture occlusion_texture;
-    normal_texture normal_texture;
-    texture_info emissive_texture;
+    class std::optional<class pbr_metallic_roughness> pbr_metallic_roughness;
+    class std::optional<class occlusion_texture_info> occlusion_texture;
+    class std::optional<class normal_texture_info> normal_texture;
+    class std::optional<class texture_info> emissive_texture;
     float emissive_factor[3];
     float alpha_cutoff;
     alpha_mode alpha_mode;
