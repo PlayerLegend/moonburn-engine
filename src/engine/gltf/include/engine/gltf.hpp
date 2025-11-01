@@ -159,9 +159,9 @@ class accessor
         return buffer_view.byte_offset + byte_offset + index * get_stride();
     }
 
-    class element
+    class component_iterator
     {
-        using contents_t = union
+        using component_t = union
         {
             int8_t i8;
             uint8_t u8;
@@ -170,20 +170,36 @@ class accessor
             uint32_t u32;
             float f32;
         };
+        const component_t *position;
+        size_t stride;
+        const accessor &parent;
 
-        contents_t *contents;
-
-        element(const class accessor &accessor, size_t index)
+      public:
+        component_iterator(const accessor &acc, size_t index)
+            : position(reinterpret_cast<const component_t *>(
+                  acc.buffer_view.buffer.contents.data() +
+                  acc.get_byte_offset(index))),
+              stride(acc.get_stride()), parent(acc)
         {
-            if (index >= accessor.count)
-                throw exception::parse_error("Accessor index out of range: " +
-                                             std::to_string(index));
-            engine::memory::allocation::const_iterator it =
-                accessor.buffer_view.buffer.contents.begin() +
-                accessor.get_byte_offset(index);
+        }
+        component_iterator &operator++()
+        {
+            position = reinterpret_cast<const component_t *>(
+                reinterpret_cast<const uint8_t *>(position) + stride);
+            return *this;
+        }
+        float operator*() const;
+        operator uint32_t() const;
 
-            contents = (contents_t *)(&(*it));
-        };
+        operator std::vector<engine::gpu::arrays::position>() const;
+        operator std::vector<engine::gpu::arrays::normal>() const;
+        operator std::vector<engine::gpu::arrays::tangent>() const;
+        operator std::vector<engine::gpu::arrays::texcoord>() const;
+        operator std::vector<engine::gpu::arrays::color>() const;
+        operator std::vector<engine::gpu::arrays::index>() const;
+        // operator std::vector<engine::gpu::arrays::joints>() const; matches
+        // color operator std::vector<engine::gpu::arrays::weights>() const;
+        // matches color
     };
 };
 

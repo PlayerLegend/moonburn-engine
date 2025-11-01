@@ -1,5 +1,6 @@
 #include <engine/gltf.hpp>
 #include <iostream>
+#include <cmath>
 
 namespace gltf
 {
@@ -80,10 +81,10 @@ class gltf::glb parse_glb(const engine::memory::const_view input)
 
 gltf::asset::asset(const json::object &root)
 {
-    version = (std::string)root.at("version");
+    version = root.at("version");
     json::object::const_iterator generator_it = root.find("generator");
     if (generator_it != root.end())
-        generator = (std::string)generator_it->second;
+        generator = generator_it->second;
 
     std::cout << "GLTF Asset version: " << version << "\n";
     std::cout << "GLTF Asset generator: " << generator << "\n";
@@ -686,4 +687,51 @@ const json::array *get_optional_array(const json::object &root,
     if (_scenes)
         for (const json::object &scene : *_scenes)
             scenes.push_back(::gltf::scene(scene, *this));
+}
+
+float gltf::accessor::component_iterator::operator*() const
+{
+    if (parent.component_type == component_type::FLOAT)
+        return position->f32;
+
+    if (!parent.normalized)
+        throw exception::parse_error(
+            "Attempted to read non-normalized component as float");
+
+    switch (parent.component_type)
+    {
+    case component_type::BYTE:
+        return std::fmax(static_cast<float>(position->i8) / 127.0f, -1.0f);
+    case component_type::UBYTE:
+        return static_cast<float>(position->u8) / 255.0f;
+    case component_type::SHORT:
+        return std::fmax(static_cast<float>(position->i16) / 32767.0f, -1.0f);
+    case component_type::USHORT:
+        return static_cast<float>(position->u16) / 65535.0f;
+    default:
+        throw exception::parse_error(
+            "Invalid component type for normalized conversion: " +
+            std::to_string(static_cast<uint16_t>(parent.component_type)));
+    }
+}
+
+gltf::accessor::component_iterator::operator uint32_t() const
+{
+    if (parent.normalized)
+        throw exception::parse_error(
+            "Attempted to read normalized component as an index");
+
+    switch (parent.component_type)
+    {
+    case component_type::UBYTE:
+        return position->u8;
+    case component_type::USHORT:
+        return position->u16;
+    case component_type::UINT:
+        return position->u32;
+    default:
+        throw exception::parse_error(
+            "Invalid component type for index conversion: " +
+            std::to_string(static_cast<uint16_t>(parent.component_type)));
+    }
 }
