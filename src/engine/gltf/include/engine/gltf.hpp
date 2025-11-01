@@ -167,6 +167,8 @@ class texture
 {
   public:
     std::string name;
+    const class image &source;
+    const class sampler &sampler;
     texture(const json::object &root, const gltf &gltf);
 };
 
