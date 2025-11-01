@@ -101,20 +101,10 @@ template <typename T> class vec4
     {
         return vec4(this->x * rhs, this->y * rhs, this->z * rhs, this->w * rhs);
     }
-};
-
-class fvec3_decompose;
-
-class fvec3 : public vec3<float>
-{
-  public:
-    fvec3() : vec3<float>() {}
-    fvec3(float _x, float _y, float _z) : vec3<float>(_x, _y, _z) {}
-    fvec3 &normalized();
-    fvec3 cross(const fvec3 &other) const;
-    float dot(const fvec3 &other) const;
-    float length() const;
-    class fvec3_decompose decompose() const;
+    T operator[](std::size_t index) const
+    {
+        return indices[index];
+    }
 };
 
 class fvec3_decompose
