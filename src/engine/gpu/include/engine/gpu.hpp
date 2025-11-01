@@ -1,7 +1,7 @@
 #include <engine/vec.hpp>
 #include <stdint.h>
 
-namespace engine::gpu::arrays
+namespace engine::gpu::attributes
 {
 using position = vec::fvec3;
 using normal = vec::vec3<int16_t>;
@@ -12,3 +12,10 @@ using joints = vec::vec4<uint8_t>;
 using weights = vec::vec4<uint8_t>;
 using index = uint32_t;
 } // namespace engine::gpu::arrays
+
+namespace engine::gpu
+{
+    class primitive {
+        uint32_t 
+    };
+}
