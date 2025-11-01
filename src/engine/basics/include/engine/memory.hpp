@@ -19,6 +19,7 @@ class const_view
 {
   public:
     allocation::const_iterator begin, end;
+    const_view(){}
     const_view(const allocation &parent)
         : begin(parent.begin()), end(parent.end())
     {
