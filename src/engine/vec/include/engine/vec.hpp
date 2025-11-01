@@ -156,6 +156,12 @@ class transform3
     fvec3 translation;
     fvec4 rotation;
     fvec3 scale;
+    transform3(fvec3 _translation = fvec3(0, 0, 0),
+               fvec4 _rotation = fvec4(0, 0, 0, 1),
+               fvec3 _scale = fvec3(1, 1, 1))
+        : translation(_translation), rotation(_rotation), scale(_scale)
+    {
+    }
 };
 
 }; // namespace vec
