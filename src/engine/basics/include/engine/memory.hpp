@@ -27,6 +27,10 @@ class const_view
     const_view(const uint8_t *data, size_t size) : begin(data), end(data + size)
     {
     }
+    size_t size() const
+    {
+        return end - begin;
+    }
 };
 }; // namespace memory
 }; // namespace engine
