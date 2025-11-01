@@ -105,26 +105,10 @@ template <typename T> class vec4
     {
         return indices[index];
     }
+    vec4 operator*(const vec4 &rhs) const;
+    vec3<T> operator*(const vec3<T> &rhs) const;
 };
 
-class fvec3_decompose
-{
-  public:
-    fvec3 normal;
-    float distance;
-};
-
-class fvec4 : public vec4<float>
-{
-  public:
-    fvec4() : vec4<float>() {}
-    fvec4(float _x, float _y, float _z, float _w) : vec4<float>(_x, _y, _z, _w)
-    {
-    }
-    fvec4 &normalized();
-    fvec4 operator*(const fvec4 &rhs) const;
-    fvec3 operator*(const fvec3 &rhs) const;
-};
 
 template <typename T> class mat4
 {
