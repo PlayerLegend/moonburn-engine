@@ -235,10 +235,10 @@ class mesh
         class target
         {
           public:
-            const accessor &position;
-            const accessor &normal;
-            const accessor &tangent;
-            const accessor &texcoord_0;
+            const accessor *position;
+            const accessor *normal;
+            const accessor *tangent;
+            target(const json::object &root, const gltf &gltf);
         };
 
         class attributes
