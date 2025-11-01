@@ -57,7 +57,16 @@ template <typename T> class vec3
     vec3 cross(const vec3 &other) const;
     float dot(const vec3 &other) const;
     float length() const;
+
+    class decompose
+    {
+      public:
+        vec3<T> normal;
+        T distance;
+        decompose(vec3<T>);
+    };
 };
+
 template <typename T> class vec4
 {
   public:
