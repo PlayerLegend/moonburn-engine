@@ -307,10 +307,16 @@ class glb
     glb(engine::memory::const_view _glb);
 };
 
-};
-class gltf
+class scene
 {
   public:
+    std::string name;
+    std::vector<const node *> nodes;
+    scene(const json::object &root, const gltf &gltf);
+};
+
+class gltf
+{
     class asset asset;
     std::vector<buffer> buffers;
     std::vector<buffer_view> buffer_views;
