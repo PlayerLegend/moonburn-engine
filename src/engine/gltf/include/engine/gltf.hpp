@@ -328,6 +328,8 @@ class gltf
     std::vector<mesh> meshes;
     std::vector<node> nodes;
     std::vector<skin> skins;
+    std::vector<scene> scenes;
+
 
     gltf(const std::string &_path,
          ::filesystem::cache_binary &_fs_bin,
