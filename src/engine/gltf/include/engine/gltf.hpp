@@ -177,6 +177,9 @@ class texture_info
   public:
     const class texture &texture;
     offset tex_coord;
+    texture_info(const json::object &root, const gltf &gltf);
+};
+
 };
 
 class material
