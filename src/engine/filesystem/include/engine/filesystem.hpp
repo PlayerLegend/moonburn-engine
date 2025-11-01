@@ -101,7 +101,18 @@ template <typename T, typename... L> class cache
         }
         return it->second;
     };
-
-    using cache_binary = cache<engine::memory::allocation>;
 };
+
+class cache_binary : public cache<filesystem::allocation>
+{
+  protected:
+    reference load(const std::string &path) override
+    {
+        return std::make_shared<cache_binary::file_t>(path);
+    }
+
+  public:
+    cache_binary(class whitelist &wl) : cache<filesystem::allocation>(wl) {}
+};
+
 }; // namespace filesystem
