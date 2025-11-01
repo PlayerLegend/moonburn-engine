@@ -73,6 +73,7 @@ template <typename T, typename... L> class cache
 {
   public:
     using reference = std::shared_ptr<file<T, L...>>;
+    using file_t = ::filesystem::file<T, L...>;
     using map = std::unordered_map<std::string, reference>;
 
   protected:
