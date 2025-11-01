@@ -60,6 +60,7 @@ class buffer_view
     offset byte_length;
     offset byte_stride;
     enum buffer_view_target target;
+    buffer_view(const json::object &root, const gltf &gltf);
 };
 enum class component_type : uint16_t
 {
@@ -86,19 +87,22 @@ class accessor_sparse_indices
     const class buffer_view &buffer_view;
     offset byte_offset;
     enum component_type component_type;
+    accessor_sparse_indices(const json::object &root, const gltf &gltf);
 };
+
 class accessor_sparse_values
 {
   public:
     const class buffer_view &buffer_view;
     offset byte_offset;
+    accessor_sparse_values(const json::object &root, const gltf &gltf);
 };
 class accessor_sparse
 {
   public:
     size_t count;
-    const accessor_sparse_indices &indices;
-    const accessor_sparse_values &values;
+    const accessor_sparse_values values;
+    accessor_sparse(const json::object &root, const gltf &gltf);
 };
 class accessor
 {
@@ -109,7 +113,7 @@ class accessor
     enum component_type component_type;
     attribute_type type;
     size_t count;
-    accessor_sparse sparse;
+    accessor(const json::object &root, const gltf &gltf);
 };
 
 class image
@@ -119,6 +123,7 @@ class image
     const class buffer_view *buffer_view;
     std::string mime_type;
     std::string uri;
+    image(const json::object &root, const gltf &gltf);
 };
 
 class sampler
@@ -149,14 +154,14 @@ class sampler
     wrap_mode wrap_s;
     wrap_mode wrap_t;
     std::string name;
+    sampler(const json::object &root);
 };
 
 class texture
 {
   public:
     std::string name;
-    const image &source;
-    const class sampler sampler;
+    texture(const json::object &root, const gltf &gltf);
 };
 
 class texture_info
@@ -206,6 +211,8 @@ class material
     float alpha_cutoff;
     alpha_mode alpha_mode;
     bool double_sided;
+
+    material(const json::object &root, const gltf &gltf);
 };
 
 class mesh
@@ -248,9 +255,11 @@ class mesh
         const accessor &indices;
         mode mode;
         std::vector<target> targets;
+        primitive(const json::object &root, const gltf &gltf);
     };
     std::string name;
     std::vector<primitive> primitives;
+    mesh(const json::object &root, const gltf &gltf);
 };
 class skin;
 class node
@@ -261,6 +270,8 @@ class node
     vec::transform3 transform;
     std::vector<const node *> children;
     const class mesh *mesh;
+    node(const json::object &root, const gltf &gltf);
+    node();
 };
 class skin
 {
@@ -284,6 +295,9 @@ class gltf
     std::vector<mesh> meshes;
     std::vector<node> nodes;
     std::vector<skin> skins;
-    gltf(std::string path);
+
+    gltf(const std::string &_path,
+         ::filesystem::cache_binary &_fs_bin,
+         ::image::rgba32_cache &_fs_img);
 };
-} // namespace gltf
+
