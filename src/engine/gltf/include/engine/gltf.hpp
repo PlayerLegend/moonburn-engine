@@ -319,7 +319,7 @@ class gltf
 {
     class asset asset;
     std::vector<buffer> buffers;
-    std::vector<buffer_view> buffer_views;
+    std::vector<::gltf::buffer_view> buffer_views;
     std::vector<accessor> accessors;
     std::vector<image> images;
     std::vector<sampler> samplers;
