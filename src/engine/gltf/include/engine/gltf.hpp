@@ -44,7 +44,13 @@ class buffer
     buffer(const json::object &root, const glb &glb);
 };
 
+enum class buffer_view_target : uint16_t
+{
+    UNSET = 0,
+    ARRAY_BUFFER = 34962,
+    ELEMENT_ARRAY_BUFFER = 34963
 };
+
 class buffer_view
 {
   public:
@@ -53,7 +59,7 @@ class buffer_view
     offset byte_offset;
     offset byte_length;
     offset byte_stride;
-    offset target;
+    enum buffer_view_target target;
 };
 enum class component_type : uint16_t
 {
