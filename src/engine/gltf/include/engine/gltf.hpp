@@ -115,6 +115,7 @@ class accessor
     enum component_type component_type;
     attribute_type type;
     size_t count;
+    std::unique_ptr<accessor_sparse> sparse;
     accessor(const json::object &root, const gltf &gltf);
 };
 
