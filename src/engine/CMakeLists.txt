@@ -1,10 +1,3 @@
-cmake_minimum_required(VERSION 3.13.0)
-
-project(engine VERSION 1.0
-                  DESCRIPTION "engine"
-                  LANGUAGES C)
-set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} -ggdb -Wall -Werror -Wfatal-errors")
-
 add_library(engine)
 
 # message("SDL2 = ${sdl2}")
