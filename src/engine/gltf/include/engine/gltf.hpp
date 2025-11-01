@@ -117,6 +117,8 @@ class accessor
     size_t count;
     std::unique_ptr<accessor_sparse> sparse;
     accessor(const json::object &root, const gltf &gltf);
+    bool normalized;
+
 };
 
 class image
