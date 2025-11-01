@@ -131,33 +131,34 @@ class image
     image(const json::object &root, const gltf &gltf);
 };
 
+enum class mag_filter : uint16_t
+{
+    NEAREST = 9728,
+    LINEAR = 9729
+};
+enum class min_filter : uint16_t
+{
+    NEAREST = 9728,
+    LINEAR = 9729,
+    NEAREST_MIPMAP_NEAREST = 9984,
+    LINEAR_MIPMAP_NEAREST = 9985,
+    NEAREST_MIPMAP_LINEAR = 9986,
+    LINEAR_MIPMAP_LINEAR = 9987
+};
+enum class wrap_mode : uint16_t
+{
+    CLAMP_TO_EDGE = 33071,
+    MIRRORED_REPEAT = 33648,
+    REPEAT = 10497
+};
+
 class sampler
 {
   public:
-    enum class mag_filter : uint16_t
-    {
-        NEAREST = 9728,
-        LINEAR = 9729
-    };
-    enum class min_filter : uint16_t
-    {
-        NEAREST = 9728,
-        LINEAR = 9729,
-        NEAREST_MIPMAP_NEAREST = 9984,
-        LINEAR_MIPMAP_NEAREST = 9985,
-        NEAREST_MIPMAP_LINEAR = 9986,
-        LINEAR_MIPMAP_LINEAR = 9987
-    };
-    enum class wrap_mode : uint16_t
-    {
-        CLAMP_TO_EDGE = 33071,
-        MIRRORED_REPEAT = 33648,
-        REPEAT = 10497
-    };
-    mag_filter mag_filter;
-    min_filter min_filter;
-    wrap_mode wrap_s;
-    wrap_mode wrap_t;
+    enum mag_filter mag_filter;
+    enum min_filter min_filter;
+    enum wrap_mode wrap_s;
+    enum wrap_mode wrap_t;
     std::string name;
     sampler(const json::object &root);
 };
