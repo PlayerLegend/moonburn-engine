@@ -244,12 +244,13 @@ class mesh
         class attributes
         {
           public:
-            const accessor &position;
-            const accessor &normal;
-            const accessor &tangent;
-            const accessor &texcoord_0;
-            const accessor &texcoord_1;
-            const accessor &color_0;
+            const accessor *position;
+            const accessor *normal;
+            const accessor *tangent;
+            const accessor *texcoord_0;
+            const accessor *texcoord_1;
+            const accessor *color_0;
+            attributes(const json::object &root, const gltf &gltf);
         };
         enum class mode : uint8_t
         {
