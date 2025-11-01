@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstdint>
 
 namespace vec
 {
@@ -111,6 +112,11 @@ template <typename T> class vec4
 
 using fvec3 = vec3<float>;
 using fvec4 = vec4<float>;
+
+using i16vec2 = vec2<int16_t>;
+using i16vec4 = vec4<int16_t>;
+using u16vec2 = vec2<uint16_t>;
+using u8vec4 = vec4<uint8_t>;
 
 template <typename T> class mat4
 {
