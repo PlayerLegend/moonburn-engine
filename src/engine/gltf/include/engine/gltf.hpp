@@ -159,6 +159,32 @@ class accessor
         return buffer_view.byte_offset + byte_offset + index * get_stride();
     }
 
+    class element
+    {
+        using contents_t = union
+        {
+            int8_t i8;
+            uint8_t u8;
+            int16_t i16;
+            uint16_t u16;
+            uint32_t u32;
+            float f32;
+        };
+
+        contents_t *contents;
+
+        element(const class accessor &accessor, size_t index)
+        {
+            if (index >= accessor.count)
+                throw exception::parse_error("Accessor index out of range: " +
+                                             std::to_string(index));
+            engine::memory::allocation::const_iterator it =
+                accessor.buffer_view.buffer.contents.begin() +
+                accessor.get_byte_offset(index);
+
+            contents = (contents_t *)(&(*it));
+        };
+    };
 };
 
 class image
