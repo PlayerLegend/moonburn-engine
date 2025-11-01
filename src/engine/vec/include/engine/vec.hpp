@@ -109,6 +109,8 @@ template <typename T> class vec4
     vec3<T> operator*(const vec3<T> &rhs) const;
 };
 
+using fvec3 = vec3<float>;
+using fvec4 = vec4<float>;
 
 template <typename T> class mat4
 {
