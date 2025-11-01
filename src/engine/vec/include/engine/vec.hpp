@@ -118,7 +118,7 @@ template <typename T> class mat4
     std::array<T, 16> indices;
 
   public:
-    mat4();
+    mat4() {};
     using column = std::array<T, 4>;
     mat4(const column &c0, const column &c1, const column &c2, const column &c3)
         : indices({c0[0],
