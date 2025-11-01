@@ -41,6 +41,9 @@ class buffer
     std::string name;
     std::string uri;
     engine::memory::allocation contents;
+    buffer(const json::object &root, const glb &glb);
+};
+
 };
 class buffer_view
 {
