@@ -180,6 +180,15 @@ class texture_info
     texture_info(const json::object &root, const gltf &gltf);
 };
 
+class pbr_metallic_roughness
+{
+  public:
+    vec::fvec4 base_color_factor;
+    std::optional<texture_info> base_color_texture;
+    std::optional<texture_info> metallic_roughness_texture;
+    float metallic_factor;
+    float roughness_factor;
+    pbr_metallic_roughness(const json::object &root, const gltf &gltf);
 };
 
 class material
@@ -191,26 +200,17 @@ class material
         MASK,
         BLEND
     };
-    class pbr_metallic_roughness
+    class occlusion_texture_info : public texture_info
     {
       public:
-        vec::fvec4 base_color_factor;
-        texture_info base_color_texture;
-        texture_info metallic_roughness_texture;
-        float metallic_factor;
-        float roughness_factor;
-    };
-    class occlusion_texture
-    {
-      public:
-        texture_info texture;
         float strength;
+        occlusion_texture_info(const json::object &root, const gltf &gltf);
     };
-    class normal_texture
+    class normal_texture_info : public texture_info
     {
       public:
-        texture_info texture;
         float scale;
+        normal_texture_info(const json::object &root, const gltf &gltf);
     };
 
     std::string name;
