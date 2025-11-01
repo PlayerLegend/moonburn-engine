@@ -1,7 +1,7 @@
 #pragma once
 #include <engine/exception.hpp>
 #include <engine/filesystem.hpp>
-#include <engine/gpu/types.hpp>
+#include <engine/gpu.hpp>
 #include <engine/image.hpp>
 #include <engine/json.hpp>
 #include <engine/memory.hpp>
