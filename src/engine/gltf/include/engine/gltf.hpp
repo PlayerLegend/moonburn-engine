@@ -330,6 +330,78 @@ class gltf
     std::vector<skin> skins;
     std::vector<scene> scenes;
 
+  public:
+    const ::gltf::asset &get_asset() const
+    {
+        return asset;
+    }
+    const ::gltf::buffer &get_buffer(size_t index) const
+    {
+        if (index >= buffers.size())
+            throw ::gltf::exception::parse_error("Buffer index out of range");
+        return buffers[index];
+    }
+    const ::gltf::buffer_view &get_buffer_view(size_t index) const
+    {
+        if (index >= buffer_views.size())
+            throw ::gltf::exception::parse_error(
+                "Buffer view index out of range");
+        return buffer_views[index];
+    }
+    const ::gltf::accessor &get_accessor(size_t index) const
+    {
+        if (index >= accessors.size())
+            throw ::gltf::exception::parse_error("Accessor index out of range");
+        return accessors[index];
+    }
+    const class ::gltf::image &get_image(size_t index) const
+    {
+        if (index >= images.size())
+            throw ::gltf::exception::parse_error("Image index out of range");
+        return images[index];
+    }
+    const ::gltf::sampler &get_sampler(size_t index) const
+    {
+        if (index >= samplers.size())
+            throw ::gltf::exception::parse_error("Sampler index out of range");
+        return samplers[index];
+    }
+    const ::gltf::texture &get_texture(size_t index) const
+    {
+        if (index >= textures.size())
+            throw ::gltf::exception::parse_error("Texture index out of range");
+        return textures[index];
+    }
+    const ::gltf::material &get_material(size_t index) const
+    {
+        if (index >= materials.size())
+            throw ::gltf::exception::parse_error("Material index out of range");
+        return materials[index];
+    }
+    const ::gltf::mesh &get_mesh(size_t index) const
+    {
+        if (index >= meshes.size())
+            throw ::gltf::exception::parse_error("Mesh index out of range");
+        return meshes[index];
+    }
+    const ::gltf::node &get_node(size_t index) const
+    {
+        if (index >= nodes.size())
+            throw ::gltf::exception::parse_error("Node index out of range");
+        return nodes[index];
+    }
+    const ::gltf::skin &get_skin(size_t index) const
+    {
+        if (index >= skins.size())
+            throw ::gltf::exception::parse_error("Skin index out of range");
+        return skins[index];
+    }
+    const ::gltf::scene &get_scene(size_t index) const
+    {
+        if (index >= scenes.size())
+            throw ::gltf::exception::parse_error("Scene index out of range");
+        return scenes[index];
+    }
 
     gltf(const std::string &_path,
          ::filesystem::cache_binary &_fs_bin,
