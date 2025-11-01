@@ -23,6 +23,8 @@ class parse_error : public base
     parse_error(const std::string &message) : base(message) {}
 };
 }; // namespace exception
+class glb;
+class gltf;
 
 using offset = size_t;
 class asset
