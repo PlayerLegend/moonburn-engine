@@ -119,6 +119,46 @@ class accessor
     accessor(const json::object &root, const gltf &gltf);
     bool normalized;
 
+    size_t get_component_size() const
+    {
+        switch (component_type)
+        {
+        case component_type::BYTE:
+        case component_type::UBYTE:
+            return 1;
+        case component_type::SHORT:
+        case component_type::USHORT:
+            return 2;
+        case component_type::UINT:
+        case component_type::FLOAT:
+            return 4;
+        default:
+            throw exception::parse_error(
+                "Invalid component type: " +
+                std::to_string(static_cast<uint16_t>(component_type)));
+        }
+    }
+
+    size_t get_attribute_size() const
+    {
+        return get_component_size() * static_cast<size_t>(type);
+    }
+
+    size_t get_stride() const
+    {
+        if (buffer_view.byte_stride != 0)
+            return buffer_view.byte_stride;
+        return get_attribute_size();
+    }
+
+    size_t get_byte_offset(size_t index) const
+    {
+        if (index >= count)
+            throw exception::parse_error("Accessor index out of range: " +
+                                         std::to_string(index));
+        return buffer_view.byte_offset + byte_offset + index * get_stride();
+    }
+
 };
 
 class image
