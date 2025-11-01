@@ -218,7 +218,7 @@ class material
     class std::optional<class occlusion_texture_info> occlusion_texture;
     class std::optional<class normal_texture_info> normal_texture;
     class std::optional<class texture_info> emissive_texture;
-    float emissive_factor[3];
+    vec::fvec3 emissive_factor;
     float alpha_cutoff;
     alpha_mode alpha_mode;
     bool double_sided;
