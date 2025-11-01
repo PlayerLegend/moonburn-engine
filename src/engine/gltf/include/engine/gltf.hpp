@@ -252,51 +252,52 @@ class material
     material(const json::object &root, const gltf &gltf);
 };
 
+class mesh_primitive
+{
+  public:
+    class target
+    {
+      public:
+        const accessor *position;
+        const accessor *normal;
+        const accessor *tangent;
+        target(const json::object &root, const gltf &gltf);
+    };
+
+    class attributes
+    {
+      public:
+        const accessor *position;
+        const accessor *normal;
+        const accessor *tangent;
+        const accessor *texcoord_0;
+        const accessor *texcoord_1;
+        const accessor *color_0;
+        attributes(const json::object &root, const gltf &gltf);
+    };
+
+    enum class mode : uint8_t
+    {
+        POINTS = 0,
+        LINES = 1,
+        LINE_LOOP = 2,
+        LINE_STRIP = 3,
+        TRIANGLES = 4,
+        TRIANGLE_STRIP = 5,
+        TRIANGLE_FAN = 6
+    };
+
+    attributes attributes;
+    const accessor *indices = NULL;
+    mode mode;
+    std::vector<target> targets;
+    mesh_primitive(const json::object &root, const gltf &gltf);
+};
 class mesh
 {
   public:
-    class primitive
-    {
-      public:
-        class target
-        {
-          public:
-            const accessor *position;
-            const accessor *normal;
-            const accessor *tangent;
-            target(const json::object &root, const gltf &gltf);
-        };
-
-        class attributes
-        {
-          public:
-            const accessor *position;
-            const accessor *normal;
-            const accessor *tangent;
-            const accessor *texcoord_0;
-            const accessor *texcoord_1;
-            const accessor *color_0;
-            attributes(const json::object &root, const gltf &gltf);
-        };
-        enum class mode : uint8_t
-        {
-            POINTS = 0,
-            LINES = 1,
-            LINE_LOOP = 2,
-            LINE_STRIP = 3,
-            TRIANGLES = 4,
-            TRIANGLE_STRIP = 5,
-            TRIANGLE_FAN = 6
-        };
-
-        attributes attributes;
-        const accessor *indices = NULL;
-        mode mode;
-        std::vector<target> targets;
-        primitive(const json::object &root, const gltf &gltf);
-    };
     std::string name;
-    std::vector<primitive> primitives;
+    std::vector<mesh_primitive> primitives;
     mesh(const json::object &root, const gltf &gltf);
 };
 class skin;

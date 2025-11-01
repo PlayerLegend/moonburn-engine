@@ -436,7 +436,7 @@ static const gltf::accessor *get_optional_accessor(const json::object &root,
     return nullptr;
 }
 
-gltf::mesh::primitive::target::target(const json::object &root,
+gltf::mesh_primitive::target::target(const json::object &root,
                                       const gltf &gltf)
     : position(get_optional_accessor(root, "POSITION", gltf)),
       normal(get_optional_accessor(root, "NORMAL", gltf)),
@@ -444,7 +444,7 @@ gltf::mesh::primitive::target::target(const json::object &root,
 {
 }
 
-gltf::mesh::primitive::attributes::attributes(const json::object &root,
+gltf::mesh_primitive::attributes::attributes(const json::object &root,
                                               const gltf &gltf)
     : position(get_optional_accessor(root, "POSITION", gltf)),
       normal(get_optional_accessor(root, "NORMAL", gltf)),
@@ -453,38 +453,38 @@ gltf::mesh::primitive::attributes::attributes(const json::object &root,
 {
 }
 
-static enum gltf::mesh::primitive::mode
+static enum gltf::mesh_primitive::mode
 get_mode(const json::object &root,
          const std::string &key,
-         enum gltf::mesh::primitive::mode default_value)
+         enum gltf::mesh_primitive::mode default_value)
 {
     json::object::const_iterator it = root.find(key);
 
     if (it == root.end())
         return default_value;
 
-    enum gltf::mesh::primitive::mode result =
-        (enum gltf::mesh::primitive::mode)it->second.strict_int();
+    enum gltf::mesh_primitive::mode result =
+        (enum gltf::mesh_primitive::mode)it->second.strict_int();
 
     switch (result)
     {
-    case gltf::mesh::primitive::mode::POINTS:
-    case gltf::mesh::primitive::mode::LINES:
-    case gltf::mesh::primitive::mode::LINE_LOOP:
-    case gltf::mesh::primitive::mode::LINE_STRIP:
-    case gltf::mesh::primitive::mode::TRIANGLES:
-    case gltf::mesh::primitive::mode::TRIANGLE_STRIP:
-    case gltf::mesh::primitive::mode::TRIANGLE_FAN:
+    case gltf::mesh_primitive::mode::POINTS:
+    case gltf::mesh_primitive::mode::LINES:
+    case gltf::mesh_primitive::mode::LINE_LOOP:
+    case gltf::mesh_primitive::mode::LINE_STRIP:
+    case gltf::mesh_primitive::mode::TRIANGLES:
+    case gltf::mesh_primitive::mode::TRIANGLE_STRIP:
+    case gltf::mesh_primitive::mode::TRIANGLE_FAN:
         return result;
     default:
         throw gltf::exception::parse_error("Invalid primitive mode value");
     }
 }
 
-using attributes_t = class gltf::mesh::primitive::attributes;
-gltf::mesh::primitive::primitive(const json::object &root, const gltf &gltf)
+using attributes_t = class gltf::mesh_primitive::attributes;
+gltf::mesh_primitive::mesh_primitive(const json::object &root, const gltf &gltf)
     : attributes(attributes_t(root.at("attributes"), gltf)),
-      mode(get_mode(root, "mode", ::gltf::mesh::primitive::mode::TRIANGLES))
+      mode(get_mode(root, "mode", ::gltf::mesh_primitive::mode::TRIANGLES))
 {
     json::object::const_iterator indices_it = root.find("indices");
 
@@ -498,7 +498,7 @@ gltf::mesh::primitive::primitive(const json::object &root, const gltf &gltf)
         const json::array &targets_array = targets_it->second;
 
         for (const json::object &target : targets_array)
-            targets.push_back(::gltf::mesh::primitive::target(target, gltf));
+            targets.push_back(::gltf::mesh_primitive::target(target, gltf));
     }
 }
 
@@ -511,7 +511,7 @@ gltf::mesh::mesh(const json::object &root, const gltf &gltf)
         const json::array &primitives_array = primitives_it->second;
 
         for (const json::object &primitive : primitives_array)
-            primitives.push_back(::gltf::mesh::primitive(primitive, gltf));
+            primitives.push_back(::gltf::mesh_primitive(primitive, gltf));
     }
 }
 
