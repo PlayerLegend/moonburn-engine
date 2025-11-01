@@ -48,6 +48,10 @@ template <typename T> class vec3
     {
         return vec3(this->x * rhs, this->y * rhs, this->z * rhs);
     }
+    vec3 operator/(const fscalar &rhs) const
+    {
+        return vec3(this->x / rhs, this->y / rhs, this->z / rhs);
+    }
 };
 template <typename T> class vec4
 {
