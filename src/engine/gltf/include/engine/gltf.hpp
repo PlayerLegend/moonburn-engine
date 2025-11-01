@@ -39,6 +39,7 @@ class buffer
 {
   public:
     std::string name;
+    std::string uri;
     engine::memory::allocation contents;
 };
 class buffer_view
