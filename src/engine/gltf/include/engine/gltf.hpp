@@ -408,3 +408,28 @@ class gltf
          ::image::rgba32_cache &_fs_img);
 };
 
+class gltf_cache : public filesystem::cache<gltf,
+                                            ::filesystem::cache_binary &,
+                                            ::image::rgba32_cache &>
+{
+    ::filesystem::cache_binary &fs_bin;
+    ::image::rgba32_cache &fs_img;
+
+  protected:
+    reference load(const std::string &path) override
+    {
+        return std::make_shared<gltf_cache::file_t>(path, fs_bin, fs_img);
+    }
+
+  public:
+    gltf_cache(class filesystem::whitelist &wl,
+               filesystem::cache_binary &_fs_bin,
+               ::image::rgba32_cache &_fs_img)
+        : filesystem::cache<gltf,
+                            ::filesystem::cache_binary &,
+                            ::image::rgba32_cache &>(wl),
+          fs_bin(_fs_bin), fs_img(_fs_img)
+    {
+    }
+};
+}; // namespace gltf
