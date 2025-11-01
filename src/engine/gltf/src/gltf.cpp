@@ -907,13 +907,27 @@ static uint8_t u8_from_float(float value)
 
     result.reserve(count);
 
-    for (size_t i = 0; i < count; i++)
+    if (normalized)
     {
-        result.push_back(
-            vec::u8vec4(u8_from_float(get_component_as_float(i, 0)),
-                        u8_from_float(get_component_as_float(i, 1)),
-                        u8_from_float(get_component_as_float(i, 2)),
-                        u8_from_float(get_component_as_float(i, 3))));
+        for (size_t i = 0; i < count; i++)
+        {
+            result.push_back(
+                vec::u8vec4(u8_from_float(get_component_as_float(i, 0)),
+                            u8_from_float(get_component_as_float(i, 1)),
+                            u8_from_float(get_component_as_float(i, 2)),
+                            u8_from_float(get_component_as_float(i, 3))));
+        }
     }
+    else
+    {
+        for (size_t i = 0; i < count; i++)
+        {
+            result.push_back(vec::u8vec4(get_component_as_index(i, 0),
+                                         get_component_as_index(i, 1),
+                                         get_component_as_index(i, 2),
+                                         get_component_as_index(i, 3)));
+        }
+    }
+    
     return result;
 }
