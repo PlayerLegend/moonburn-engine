@@ -83,21 +83,21 @@ template <typename T> class vec4
     };
     vec4() : x(0), y(0), z(0), w(0) {}
     vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
-    vec4 &operator+(const vec4 &rhs) const
+    vec4 operator+(const vec4 &rhs) const
     {
         return vec4(this->x + rhs.x,
                     this->y + rhs.y,
                     this->z + rhs.z,
                     this->w + rhs.w);
     }
-    vec4 &operator-(const vec4 &rhs) const
+    vec4 operator-(const vec4 &rhs) const
     {
         return vec4(this->x - rhs.x,
                     this->y - rhs.y,
                     this->z - rhs.z,
                     this->w - rhs.w);
     }
-    vec4 &operator*(const fscalar &rhs) const
+    vec4 operator*(const fscalar &rhs) const
     {
         return vec4(this->x * rhs, this->y * rhs, this->z * rhs, this->w * rhs);
     }
