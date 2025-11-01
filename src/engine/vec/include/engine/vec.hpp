@@ -13,19 +13,20 @@ template <typename T> class vec2
     T y;
     vec2() : x(0), y(0) {}
     vec2(T _x, T _y) : x(_x), y(_y) {}
-    vec2 &operator+(const vec2 &rhs) const
+    vec2 operator+(const vec2 &rhs) const
     {
         return vec2(this->x + rhs.x, this->y + rhs.y);
     }
-    vec2 &operator-(const vec2 &rhs) const
+    vec2 operator-(const vec2 &rhs) const
     {
         return vec2(this->x - rhs.x, this->y - rhs.y);
     }
-    vec2 &operator*(const fscalar &rhs) const
+    vec2 operator*(const fscalar &rhs) const
     {
         return vec2(this->x * rhs, this->y * rhs);
     }
 };
+
 template <typename T> class vec3
 {
   public:
@@ -34,15 +35,16 @@ template <typename T> class vec3
     T z;
     vec3() : x(0), y(0), z(0) {}
     vec3(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
-    vec3 &operator+(const vec3 &rhs) const
+
+    vec3 operator+(const vec3 &rhs) const
     {
         return vec3(this->x + rhs.x, this->y + rhs.y, this->z + rhs.z);
     }
-    vec3 &operator-(const vec3 &rhs) const
+    vec3 operator-(const vec3 &rhs) const
     {
         return vec3(this->x - rhs.x, this->y - rhs.y, this->z - rhs.z);
     }
-    vec3 &operator*(const fscalar &rhs) const
+    vec3 operator*(const fscalar &rhs) const
     {
         return vec3(this->x * rhs, this->y * rhs, this->z * rhs);
     }
