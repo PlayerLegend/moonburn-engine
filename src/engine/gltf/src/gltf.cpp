@@ -1,6 +1,6 @@
+#include <cmath>
 #include <engine/gltf.hpp>
 #include <iostream>
-#include <cmath>
 
 namespace gltf
 {
@@ -563,6 +563,26 @@ gltf::node::node(const json::object &root, const gltf &gltf)
     bin = engine::memory::const_view{toc.bin->data, toc.bin->length};
 }
 
+size_t get_component_size(enum gltf::component_type component_type)
+{
+    switch (component_type)
+    {
+    case gltf::component_type::BYTE:
+    case gltf::component_type::UBYTE:
+        return 1;
+    case gltf::component_type::SHORT:
+    case gltf::component_type::USHORT:
+        return 2;
+    case gltf::component_type::UINT:
+    case gltf::component_type::FLOAT:
+        return 4;
+    default:
+        throw gltf::exception::parse_error(
+            "Invalid component type: " +
+            std::to_string(static_cast<uint16_t>(component_type)));
+    }
+}
+
 ::gltf::accessor::accessor(const json::object &root, const gltf &gltf)
     : buffer_view(gltf.get_buffer_view(root.at("bufferView").strict_int())),
       byte_offset(get_offset(root, "byteOffset", 0)),
@@ -570,8 +590,26 @@ gltf::node::node(const json::object &root, const gltf &gltf)
           (enum component_type)root.at("componentType").strict_int()),
       type(parse_attribute_type(get_string(root, "type"))),
       count(root.at("count").strict_int()),
-      normalized(get_bool(root, "normalized", false))
+      normalized(get_bool(root, "normalized", false)),
+      component_size(get_component_size(component_type)),
+      attribute_size(component_size * (size_t)type),
+      stride(buffer_view.byte_stride ? buffer_view.byte_stride : attribute_size)
 {
+    switch (component_type)
+    {
+    case component_type::BYTE:
+    case component_type::UBYTE:
+    case component_type::SHORT:
+    case component_type::USHORT:
+    case component_type::UINT:
+    case component_type::FLOAT:
+        break;
+    default:
+        throw ::gltf::exception::parse_error(
+            "Invalid component type: " +
+            std::to_string(static_cast<uint16_t>(component_type)));
+    }
+
     json::object::const_iterator sparse_it = root.find("sparse");
     if (sparse_it != root.end())
         sparse = std::unique_ptr<accessor_sparse>(
@@ -689,49 +727,195 @@ const json::array *get_optional_array(const json::object &root,
             scenes.push_back(::gltf::scene(scene, *this));
 }
 
-float gltf::accessor::component_iterator::operator*() const
+float gltf::accessor::get_component_as_float(size_t attribute_index,
+                                             size_t component_index) const
 {
-    if (parent.component_type == component_type::FLOAT)
-        return position->f32;
+    const uint8_t *ptr = buffer_view.buffer.contents.data() +
+                         get_byte_offset(attribute_index, component_index);
 
-    if (!parent.normalized)
+    if (component_type == component_type::FLOAT)
+        return *reinterpret_cast<const float *>(ptr);
+
+    if (!normalized)
         throw exception::parse_error(
             "Attempted to read non-normalized component as float");
 
-    switch (parent.component_type)
+    switch (component_type)
     {
     case component_type::BYTE:
-        return std::fmax(static_cast<float>(position->i8) / 127.0f, -1.0f);
+        return std::fmax(
+            static_cast<float>(*reinterpret_cast<const int8_t *>(ptr)) / 127.0f,
+            -1.0f);
     case component_type::UBYTE:
-        return static_cast<float>(position->u8) / 255.0f;
+        return static_cast<float>(*reinterpret_cast<const uint8_t *>(ptr)) /
+               255.0f;
     case component_type::SHORT:
-        return std::fmax(static_cast<float>(position->i16) / 32767.0f, -1.0f);
+        return std::fmax(
+            static_cast<float>(*reinterpret_cast<const int16_t *>(ptr)) /
+                32767.0f,
+            -1.0f);
     case component_type::USHORT:
-        return static_cast<float>(position->u16) / 65535.0f;
+        return static_cast<float>(*reinterpret_cast<const uint16_t *>(ptr)) /
+               65535.0f;
     default:
         throw exception::parse_error(
             "Invalid component type for normalized conversion: " +
-            std::to_string(static_cast<uint16_t>(parent.component_type)));
+            std::to_string(static_cast<uint16_t>(component_type)));
     }
 }
 
-gltf::accessor::component_iterator::operator uint32_t() const
+uint32_t gltf::accessor::get_component_as_index(size_t attribute_index,
+                                                size_t component_index) const
 {
-    if (parent.normalized)
+    if (normalized)
         throw exception::parse_error(
             "Attempted to read normalized component as an index");
 
-    switch (parent.component_type)
+    const uint8_t *ptr = buffer_view.buffer.contents.data() +
+                         get_byte_offset(attribute_index, component_index);
+
+    switch (component_type)
     {
     case component_type::UBYTE:
-        return position->u8;
+        return *reinterpret_cast<const uint8_t *>(ptr);
     case component_type::USHORT:
-        return position->u16;
+        return *reinterpret_cast<const uint16_t *>(ptr);
     case component_type::UINT:
-        return position->u32;
+        return *reinterpret_cast<const uint32_t *>(ptr);
     default:
         throw exception::parse_error(
             "Invalid component type for index conversion: " +
-            std::to_string(static_cast<uint16_t>(parent.component_type)));
+            std::to_string(static_cast<uint16_t>(component_type)));
     }
+}
+
+static int16_t i16_from_float(float value)
+{
+    return static_cast<int16_t>(std::round(value * 32767.0f));
+}
+
+static uint16_t u16_from_float(float value)
+{
+    return static_cast<uint16_t>(std::round(value * 65535.0f));
+}
+
+static uint8_t u8_from_float(float value)
+{
+    return static_cast<uint8_t>(std::round(value * 255.0f));
+}
+
+::gltf::accessor::operator std::vector<vec::fvec3>() const
+{
+    if (type != attribute_type::VEC3)
+        throw exception::parse_error("Accessor type is not VEC3, cannot "
+                                     "convert to std::vector<vec::fvec3>");
+
+    std::vector<vec::fvec3> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(vec::fvec3(get_component_as_float(i, 0),
+                                    get_component_as_float(i, 1),
+                                    get_component_as_float(i, 2)));
+    }
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<uint32_t>() const
+{
+    if (type != attribute_type::SCALAR)
+        throw exception::parse_error("Accessor type is not SCALAR, cannot "
+                                     "convert to std::vector<uint32_t>");
+
+    std::vector<uint32_t> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(get_component_as_index(i, 0));
+    }
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::i16vec2>() const
+{
+    if (type != attribute_type::VEC2)
+        throw exception::parse_error("Accessor type is not VEC2, cannot "
+                                     "convert to std::vector<vec::i16vec2>");
+
+    std::vector<vec::i16vec2> result;
+
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(
+            vec::i16vec2(i16_from_float(get_component_as_float(i, 0)),
+                         i16_from_float(get_component_as_float(i, 1))));
+    }
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::i16vec4>() const
+{
+    if (type != attribute_type::VEC4)
+        throw exception::parse_error("Accessor type is not VEC4, cannot "
+                                     "convert to std::vector<vec::i16vec4>");
+
+    std::vector<vec::i16vec4> result;
+
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(
+            vec::i16vec4(i16_from_float(get_component_as_float(i, 0)),
+                         i16_from_float(get_component_as_float(i, 1)),
+                         i16_from_float(get_component_as_float(i, 2)),
+                         i16_from_float(get_component_as_float(i, 3))));
+    }
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::u16vec2>() const
+{
+    if (type != attribute_type::VEC2)
+        throw exception::parse_error("Accessor type is not VEC2, cannot "
+                                     "convert to std::vector<vec::u16vec2>");
+
+    std::vector<vec::u16vec2> result;
+
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(
+            vec::u16vec2(u16_from_float(get_component_as_float(i, 0)),
+                         u16_from_float(get_component_as_float(i, 1))));
+    }
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::u8vec4>() const
+{
+    if (type != attribute_type::VEC4)
+        throw exception::parse_error("Accessor type is not VEC4, cannot "
+                                     "convert to std::vector<vec::u8vec4>");
+
+    std::vector<vec::u8vec4> result;
+
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(
+            vec::u8vec4(u8_from_float(get_component_as_float(i, 0)),
+                        u8_from_float(get_component_as_float(i, 1)),
+                        u8_from_float(get_component_as_float(i, 2)),
+                        u8_from_float(get_component_as_float(i, 3))));
+    }
+    return result;
 }

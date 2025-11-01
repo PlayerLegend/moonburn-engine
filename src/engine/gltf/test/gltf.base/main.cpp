@@ -20,6 +20,21 @@ void test_example1(const std::string &path)
     }
     const gltf::gltf &doc = *ref;
 
+    std::vector<vec::fvec3> positions = doc.get_accessor(0);
+
+    for (const vec::fvec3 &pos : positions)
+    {
+        std::cout << "Position: " << pos.x << ", " << pos.y << ", " << pos.z
+                  << "\n";
+    }
+
+    std::vector<uint32_t> indices = doc.get_accessor(3);
+
+    for (const uint32_t &index : indices)
+    {
+        std::cout << "Index: " << index << "\n";
+    }
+
     // Asset checks
     const gltf::asset &asset = doc.get_asset();
     if (asset.version != "2.0")

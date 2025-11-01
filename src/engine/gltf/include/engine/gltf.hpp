@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/exception.hpp>
 #include <engine/filesystem.hpp>
+#include <engine/gpu/types.hpp>
 #include <engine/image.hpp>
 #include <engine/json.hpp>
 #include <engine/memory.hpp>
@@ -108,6 +109,9 @@ class accessor_sparse
 };
 class accessor
 {
+    float get_component_as_float(size_t attribute_index, size_t component_index ) const;
+    uint32_t get_component_as_index(size_t attribute_index, size_t component_index) const;
+
   public:
     std::string name;
     const class buffer_view &buffer_view;
@@ -118,89 +122,30 @@ class accessor
     std::unique_ptr<accessor_sparse> sparse;
     accessor(const json::object &root, const gltf &gltf);
     bool normalized;
+    size_t component_size;
+    size_t attribute_size;
+    size_t stride;
 
-    size_t get_component_size() const
+    size_t get_byte_offset(size_t attribute_index, size_t component_index) const
     {
-        switch (component_type)
-        {
-        case component_type::BYTE:
-        case component_type::UBYTE:
-            return 1;
-        case component_type::SHORT:
-        case component_type::USHORT:
-            return 2;
-        case component_type::UINT:
-        case component_type::FLOAT:
-            return 4;
-        default:
-            throw exception::parse_error(
-                "Invalid component type: " +
-                std::to_string(static_cast<uint16_t>(component_type)));
-        }
-    }
-
-    size_t get_attribute_size() const
-    {
-        return get_component_size() * static_cast<size_t>(type);
-    }
-
-    size_t get_stride() const
-    {
-        if (buffer_view.byte_stride != 0)
-            return buffer_view.byte_stride;
-        return get_attribute_size();
-    }
-
-    size_t get_byte_offset(size_t index) const
-    {
-        if (index >= count)
+        if (attribute_index >= count)
             throw exception::parse_error("Accessor index out of range: " +
-                                         std::to_string(index));
-        return buffer_view.byte_offset + byte_offset + index * get_stride();
+                                         std::to_string(attribute_index));
+        if (component_index >= (size_t)type)
+            throw exception::parse_error(
+                "Accessor component index out of range: " +
+                std::to_string(component_index));
+
+        return buffer_view.byte_offset + byte_offset +
+               attribute_index * stride + component_index * component_size;
     }
 
-    class component_iterator
-    {
-        using component_t = union
-        {
-            int8_t i8;
-            uint8_t u8;
-            int16_t i16;
-            uint16_t u16;
-            uint32_t u32;
-            float f32;
-        };
-        const component_t *position;
-        size_t stride;
-        const accessor &parent;
-
-      public:
-        component_iterator(const accessor &acc, size_t index)
-            : position(reinterpret_cast<const component_t *>(
-                  acc.buffer_view.buffer.contents.data() +
-                  acc.get_byte_offset(index))),
-              stride(acc.get_stride()), parent(acc)
-        {
-        }
-        component_iterator &operator++()
-        {
-            position = reinterpret_cast<const component_t *>(
-                reinterpret_cast<const uint8_t *>(position) + stride);
-            return *this;
-        }
-        float operator*() const;
-        operator uint32_t() const;
-
-        operator std::vector<engine::gpu::arrays::position>() const;
-        operator std::vector<engine::gpu::arrays::normal>() const;
-        operator std::vector<engine::gpu::arrays::tangent>() const;
-        operator std::vector<engine::gpu::arrays::texcoord>() const;
-        operator std::vector<engine::gpu::arrays::color>() const;
-        operator std::vector<engine::gpu::arrays::index>() const;
-        // operator std::vector<engine::gpu::arrays::joints>() const; matches
-        // color operator std::vector<engine::gpu::arrays::weights>() const;
-        // matches color
-    };
+    operator std::vector<vec::fvec3>() const;
+    operator std::vector<uint32_t>() const;
+    operator std::vector<vec::i16vec2>() const;
+    operator std::vector<vec::i16vec4>() const;
+    operator std::vector<vec::u16vec2>() const;
+    operator std::vector<vec::u8vec4>() const;
 };
 
 class image
