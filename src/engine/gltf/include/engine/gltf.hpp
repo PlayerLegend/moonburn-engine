@@ -102,6 +102,7 @@ class accessor_sparse
 {
   public:
     size_t count;
+    const accessor_sparse_indices indices;
     const accessor_sparse_values values;
     accessor_sparse(const json::object &root, const gltf &gltf);
 };
