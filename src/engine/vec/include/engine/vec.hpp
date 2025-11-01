@@ -142,6 +142,10 @@ template <typename T> class mat4
     template <typename... L> mat4(L... ts) : indices{ts...} {};
     mat4<T> operator*(const mat4<T> &rhs) const;
     vec4<T> operator*(const vec4<T> &rhs) const;
+    T operator[](std::size_t index) const
+    {
+        return indices[index];
+    }
 };
 
 using fmat4 = mat4<float>;
