@@ -292,6 +292,9 @@ class skin
     const accessor &inverse_bind_matrices;
     const node *skeleton;
     std::vector<const node *> joints;
+    skin(const json::object &root, const gltf &gltf);
+};
+
 };
 class gltf
 {
