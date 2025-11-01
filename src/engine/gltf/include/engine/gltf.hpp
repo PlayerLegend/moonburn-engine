@@ -295,6 +295,18 @@ class skin
     skin(const json::object &root, const gltf &gltf);
 };
 
+class glb
+{
+  public:
+    engine::memory::const_view json;
+    engine::memory::const_view bin;
+    glb(engine::memory::const_view _json, engine::memory::const_view _bin)
+        : json(_json), bin(_bin)
+    {
+    }
+    glb(engine::memory::const_view _glb);
+};
+
 };
 class gltf
 {
