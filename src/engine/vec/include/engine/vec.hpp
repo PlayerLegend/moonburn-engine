@@ -70,10 +70,17 @@ template <typename T> class vec3
 template <typename T> class vec4
 {
   public:
-    T x;
-    T y;
-    T z;
-    T w;
+    union
+    {
+        struct
+        {
+            T x;
+            T y;
+            T z;
+            T w;
+        };
+        std::array<T, 4> indices;
+    };
     vec4() : x(0), y(0), z(0), w(0) {}
     vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
     vec4 &operator+(const vec4 &rhs) const
