@@ -1,6 +1,6 @@
 IndentWidth: 4
 TabWidth: 4
-SortIncludes: false
+SortIncludes: CaseSensitive
 ColumnLimit: 80
 BreakBeforeBraces: Allman
 AlignAfterOpenBracket: true
