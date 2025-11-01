@@ -31,7 +31,7 @@ struct glb_toc
 #define GLB_CHUNKTYPE_JSON 0x4E4F534A
 #define GLB_CHUNKTYPE_BIN 0x004E4942
 
-struct gltf::glb_toc parse_toc(const engine::memory::const_view input)
+static struct gltf::glb_toc parse_toc(const engine::memory::const_view input)
 {
     struct gltf::glb_toc toc;
     toc.header = (const gltf::glb_header *)&input.begin[0];
@@ -70,7 +70,7 @@ struct gltf::glb_toc parse_toc(const engine::memory::const_view input)
     return toc;
 }
 
-class gltf::glb parse_glb(const engine::memory::const_view input)
+static class gltf::glb parse_glb(const engine::memory::const_view input)
 {
     struct gltf::glb_toc toc = parse_toc(input);
 
@@ -92,9 +92,9 @@ gltf::asset::asset(const json::object &root)
 
 gltf::asset::asset() : version(""), generator("") {}
 
-std::string get_string(const json::object &root,
-                       const std::string &key,
-                       const std::string &default_value)
+static std::string get_string(const json::object &root,
+                              const std::string &key,
+                              const std::string &default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -102,7 +102,7 @@ std::string get_string(const json::object &root,
     return default_value;
 }
 
-std::string get_string(const json::object &root, const std::string &key)
+static std::string get_string(const json::object &root, const std::string &key)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -110,9 +110,8 @@ std::string get_string(const json::object &root, const std::string &key)
     return "";
 }
 
-bool get_bool(const json::object &root,
-              const std::string &key,
-              bool default_value)
+static bool
+get_bool(const json::object &root, const std::string &key, bool default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -120,9 +119,9 @@ bool get_bool(const json::object &root,
     return default_value;
 }
 
-gltf::offset get_offset(const json::object &root,
-                        const std::string &key,
-                        gltf::offset default_value)
+static gltf::offset get_offset(const json::object &root,
+                               const std::string &key,
+                               gltf::offset default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -130,9 +129,8 @@ gltf::offset get_offset(const json::object &root,
     return default_value;
 }
 
-float get_float(const json::object &root,
-                const std::string &key,
-                float default_value)
+static float
+get_float(const json::object &root, const std::string &key, float default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -140,7 +138,7 @@ float get_float(const json::object &root,
     return default_value;
 }
 
-vec::fvec4 array_to_fvec4(const json::array &array)
+static vec::fvec4 array_to_fvec4(const json::array &array)
 {
     if (array.size() != 4)
         throw gltf::exception::parse_error("Not a vec4");
@@ -151,9 +149,9 @@ vec::fvec4 array_to_fvec4(const json::array &array)
                       array[3].as_float());
 }
 
-vec::fvec4 get_fvec4(const json::object &root,
-                     const std::string &key,
-                     const vec::fvec4 &default_value)
+static vec::fvec4 get_fvec4(const json::object &root,
+                            const std::string &key,
+                            const vec::fvec4 &default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -161,7 +159,7 @@ vec::fvec4 get_fvec4(const json::object &root,
     return default_value;
 }
 
-vec::fvec3 array_to_fvec3(const json::array &array)
+static vec::fvec3 array_to_fvec3(const json::array &array)
 {
     if (array.size() != 3)
         throw gltf::exception::parse_error("Not a vec3");
@@ -171,9 +169,9 @@ vec::fvec3 array_to_fvec3(const json::array &array)
                       array[2].as_float());
 }
 
-vec::fvec3 get_fvec3(const json::object &root,
-                     const std::string &key,
-                     const vec::fvec3 &default_value)
+static vec::fvec3 get_fvec3(const json::object &root,
+                            const std::string &key,
+                            const vec::fvec3 &default_value)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -214,7 +212,7 @@ gltf::buffer_view::buffer_view(const json::object &root, const gltf &gltf)
         target = buffer_view_target::UNSET;
 }
 
-gltf::attribute_type parse_attribute_type(const std::string &name)
+static gltf::attribute_type parse_attribute_type(const std::string &name)
 {
     if (name == "SCALAR")
         return gltf::attribute_type::SCALAR;
@@ -256,9 +254,9 @@ gltf::accessor_sparse::accessor_sparse(const json::object &root,
 {
 }
 
-gltf::mag_filter get_mag_filter(const json::object &root,
-                                const std::string &key,
-                                gltf::mag_filter default_value)
+static gltf::mag_filter get_mag_filter(const json::object &root,
+                                       const std::string &key,
+                                       gltf::mag_filter default_value)
 {
     json::object::const_iterator it = root.find(key);
 
@@ -277,9 +275,9 @@ gltf::mag_filter get_mag_filter(const json::object &root,
     }
 }
 
-gltf::min_filter get_min_filter(const json::object &root,
-                                const std::string &key,
-                                gltf::min_filter default_value)
+static gltf::min_filter get_min_filter(const json::object &root,
+                                       const std::string &key,
+                                       gltf::min_filter default_value)
 {
     json::object::const_iterator it = root.find(key);
 
@@ -302,9 +300,9 @@ gltf::min_filter get_min_filter(const json::object &root,
     }
 }
 
-gltf::wrap_mode get_wrap_mode(const json::object &root,
-                              const std::string &key,
-                              gltf::wrap_mode default_value)
+static gltf::wrap_mode get_wrap_mode(const json::object &root,
+                                     const std::string &key,
+                                     gltf::wrap_mode default_value)
 {
     json::object::const_iterator it = root.find(key);
 
@@ -358,7 +356,7 @@ gltf::texture_info::texture_info(const json::object &root, const gltf &gltf)
 {
 }
 
-std::optional<gltf::texture_info>
+static std::optional<gltf::texture_info>
 get_optional_texture_info(const json::object &root,
                           const std::string &key,
                           const gltf::gltf &gltf)
@@ -382,7 +380,7 @@ gltf::pbr_metallic_roughness::pbr_metallic_roughness(const json::object &root,
 {
 }
 
-enum gltf::material::alpha_mode parse_alpha_mode(const std::string &name)
+static enum gltf::material::alpha_mode parse_alpha_mode(const std::string &name)
 {
     if (name == "OPAQUE")
         return gltf::material::alpha_mode::OPAQUE;
@@ -428,9 +426,9 @@ gltf::material::material(const json::object &root, const gltf &gltf)
         emissive_texture.emplace(texture_info(_emissive_texture->second, gltf));
 }
 
-const gltf::accessor *get_optional_accessor(const json::object &root,
-                                            const std::string &key,
-                                            const gltf::gltf &gltf)
+static const gltf::accessor *get_optional_accessor(const json::object &root,
+                                                   const std::string &key,
+                                                   const gltf::gltf &gltf)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
@@ -455,7 +453,7 @@ gltf::mesh::primitive::attributes::attributes(const json::object &root,
 {
 }
 
-enum gltf::mesh::primitive::mode
+static enum gltf::mesh::primitive::mode
 get_mode(const json::object &root,
          const std::string &key,
          enum gltf::mesh::primitive::mode default_value)
@@ -563,7 +561,7 @@ gltf::node::node(const json::object &root, const gltf &gltf)
     bin = engine::memory::const_view{toc.bin->data, toc.bin->length};
 }
 
-size_t get_component_size(enum gltf::component_type component_type)
+static size_t get_component_size(enum gltf::component_type component_type)
 {
     switch (component_type)
     {
@@ -629,8 +627,8 @@ size_t get_component_size(enum gltf::component_type component_type)
     }
 }
 
-const json::array *get_optional_array(const json::object &root,
-                                      const std::string &key)
+static const json::array *get_optional_array(const json::object &root,
+                                             const std::string &key)
 {
     json::object::const_iterator it = root.find(key);
     if (it != root.end())
