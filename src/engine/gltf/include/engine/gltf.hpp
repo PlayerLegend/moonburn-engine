@@ -32,6 +32,8 @@ class asset
   public:
     std::string version;
     std::string generator;
+    asset(const json::object &root);
+    asset();
 };
 class buffer
 {
