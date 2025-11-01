@@ -263,7 +263,7 @@ class mesh
         };
 
         attributes attributes;
-        const accessor &indices;
+        const accessor *indices = NULL;
         mode mode;
         std::vector<target> targets;
         primitive(const json::object &root, const gltf &gltf);
