@@ -187,3 +187,17 @@ vec::fmat4_scale::fmat4_scale(const fvec3 &scale)
             fmat4::column{0, 0, 0, 1})
 {
 }
+
+vec::fmat4_transform3::fmat4_transform3(const transform3 &transform)
+    : fmat4_transform3(fmat4_translation(transform.translation),
+                       fmat4_rotation(transform.rotation),
+                       fmat4_scale(transform.scale))
+{
+}
+
+vec::fmat4_transform3::fmat4_transform3(const fmat4_translation &translation,
+                                        const fmat4_rotation &rotation,
+                                        const fmat4_scale &scale)
+    : fmat4(translation * rotation * scale)
+{
+}

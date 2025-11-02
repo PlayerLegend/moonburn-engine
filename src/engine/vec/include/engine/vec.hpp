@@ -217,4 +217,13 @@ class fmat4_scale : public fmat4
     fmat4_scale(const fvec3 &scale);
 };
 
+class fmat4_transform3 : public fmat4
+{
+  public:
+    fmat4_transform3(const transform3 &transform);
+    fmat4_transform3(const fmat4_translation &translation,
+                     const fmat4_rotation &rotation,
+                     const fmat4_scale &scale);
+};
+
 }; // namespace vec
