@@ -108,8 +108,10 @@ class accessor_sparse
 };
 class accessor
 {
-    float get_component_as_float(size_t attribute_index, size_t component_index ) const;
-    uint32_t get_component_as_index(size_t attribute_index, size_t component_index) const;
+    float get_component_as_float(size_t attribute_index,
+                                 size_t component_index) const;
+    uint32_t get_component_as_index(size_t attribute_index,
+                                    size_t component_index) const;
 
   public:
     std::string name;
