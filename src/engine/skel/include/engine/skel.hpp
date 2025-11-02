@@ -65,4 +65,27 @@ class armature
     armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf);
 };
 
+class result
+{
+    vec::fvec3 value_translation[max_bones];
+    float weight_translation[max_bones];
+    vec::fvec4 value_rotation[max_bones];
+    float weight_rotation[max_bones];
+    vec::fvec3 value_scale[max_bones];
+    float weight_scale[max_bones];
+    vec::fmat4 transforms[max_bones];
+
+  public:
+    result(const armature &armature);
+    void accumulate_translation(bone_index bone,
+                                const vec::fvec3 &translation,
+                                float weight);
+    void accumulate_rotation(bone_index bone,
+                             const vec::fvec4 &rotation,
+                             float weight);
+    void
+    accumulate_scale(bone_index bone, const vec::fvec3 &scale, float weight);
+    vec::transform3 get_final_transform(bone_index bone) const;
+};
+
 } // namespace skel

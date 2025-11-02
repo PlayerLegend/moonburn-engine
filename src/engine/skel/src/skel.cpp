@@ -155,3 +155,71 @@ skel::animation::animation(gltf::animation &gltf_animation,
         animation_add_channel(*this, gltf_animation, gltf_channel);
     }
 }
+
+skel::result::result(const skel::armature &armature)
+    : weight_translation(), weight_rotation(), weight_scale()
+{
+    for (size_t i = 0; i < armature.bones.size(); i++)
+    {
+        value_translation[i] = armature.default_transforms[i].translation;
+        value_rotation[i] = armature.default_transforms[i].rotation;
+        value_scale[i] = armature.default_transforms[i].scale;
+    }
+}
+
+void skel::result::accumulate_translation(bone_index bone,
+                                          const vec::fvec3 &translation,
+                                          float weight)
+{
+    if (weight_translation[bone] < vec::epsilon)
+    {
+        value_translation[bone] = translation;
+        weight_translation[bone] = weight;
+    }
+    else
+    {
+        value_translation[bone] =
+            vec::lerp(value_translation[bone],
+                      translation,
+                      weight / (weight + weight_translation[bone]));
+        weight_translation[bone] += weight;
+    }
+}
+
+void skel::result::accumulate_rotation(bone_index bone,
+                                       const vec::fvec4 &rotation,
+                                       float weight)
+{
+    if (weight_rotation[bone] < vec::epsilon)
+    {
+        value_rotation[bone] = rotation;
+        weight_rotation[bone] = weight;
+    }
+    else
+    {
+        value_rotation[bone] =
+            vec::slerp(value_rotation[bone],
+                       rotation,
+                       weight / (weight + weight_rotation[bone]));
+        weight_rotation[bone] += weight;
+    }
+}
+
+void skel::result::accumulate_scale(bone_index bone,
+                                    const vec::fvec3 &scale,
+                                    float weight)
+{
+    if (weight_scale[bone] < vec::epsilon)
+    {
+        value_scale[bone] = scale;
+        weight_scale[bone] = weight;
+    }
+    else
+    {
+        value_scale[bone] = vec::lerp(value_scale[bone],
+                                      scale,
+                                      weight / (weight + weight_scale[bone]));
+        weight_scale[bone] += weight;
+    }
+}
+
