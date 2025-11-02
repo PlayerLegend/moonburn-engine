@@ -124,7 +124,7 @@ vec::fvec4 vec::slerp(const fvec4 &a, const fvec4 &b, float t)
 {
     float angle = std::acos(vec::dot(a, b));
 
-    if (std::abs(angle) < 0.0001f)
+    if (std::fabs(angle) < 0.0001f)
     {
         return a;
     }
