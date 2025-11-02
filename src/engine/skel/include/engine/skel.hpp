@@ -7,6 +7,7 @@ namespace skel
 {
 
 using bone_index = uint8_t;
+inline constexpr bone_index max_bones = 255;
 
 using animation_sampler_output =
     std::variant<std::vector<vec::fvec3>,
@@ -46,7 +47,7 @@ class armature_bone
     bone_index child;
     bone_index peer;
     bone_index parent;
-    armature_bone() : child(-1), peer(-1), parent(-1) {}
+    armature_bone() : child(max_bones), peer(max_bones), parent(max_bones) {}
     armature_bone(bone_index _child, bone_index _peer, bone_index _parent)
         : child(_child), peer(_peer), parent(_parent)
     {

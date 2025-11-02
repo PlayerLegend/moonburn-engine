@@ -4,7 +4,7 @@ static skel::bone_index find_index_of_node(const gltf::node *node,
                                            const gltf::skin &skin)
 {
     if (!node)
-        return -1;
+        return skel::max_bones;
     for (size_t joint_index = 0; joint_index < skin.joints.size();
          joint_index++)
     {
@@ -21,8 +21,8 @@ static void armature_bone_add_child(std::vector<skel::armature_bone> &bones,
 {
     skel::armature_bone &parent_bone = bones[parent_index];
     skel::armature_bone &child_bone = bones[child_index];
-    assert(child_bone.parent == std::numeric_limits<skel::bone_index>::max());
-    assert(child_bone.peer == std::numeric_limits<skel::bone_index>::max());
+    assert(child_bone.parent == skel::max_bones);
+    assert(child_bone.peer == skel::max_bones);
     child_bone.peer = parent_bone.child;
     child_bone.parent = parent_index;
     parent_bone.child = child_index;
