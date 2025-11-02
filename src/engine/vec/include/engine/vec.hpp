@@ -7,6 +7,8 @@ namespace vec
 using iscalar = long int;
 using fscalar = float;
 
+constexpr float epsilon = 0.0001f;
+
 template <typename T> class vec2
 {
   public:
