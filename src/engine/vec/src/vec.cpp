@@ -20,10 +20,14 @@ template <> vec::fmat4 vec::fmat4::operator*(const fmat4 &rhs) const
 template <> vec::fvec4 vec::fvec4::operator*(const vec::fvec4 &rhs) const
 {
     vec::fvec4 result;
-    result.w = this->w * rhs.w - this->x * rhs.x - this->y * rhs.y - this->z * rhs.z;
-    result.x = this->w * rhs.x + this->x * rhs.w + this->y * rhs.z - this->z * rhs.y;
-    result.y = this->w * rhs.y - this->x * rhs.z + this->y * rhs.w + this->z * rhs.x;
-    result.z = this->w * rhs.z + this->x * rhs.y - this->y * rhs.x + this->z * rhs.w;
+    result.w =
+        this->w * rhs.w - this->x * rhs.x - this->y * rhs.y - this->z * rhs.z;
+    result.x =
+        this->w * rhs.x + this->x * rhs.w + this->y * rhs.z - this->z * rhs.y;
+    result.y =
+        this->w * rhs.y - this->x * rhs.z + this->y * rhs.w + this->z * rhs.x;
+    result.z =
+        this->w * rhs.z + this->x * rhs.y - this->y * rhs.x + this->z * rhs.w;
     return result;
 }
 
