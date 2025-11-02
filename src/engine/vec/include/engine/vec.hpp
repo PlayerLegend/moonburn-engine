@@ -102,6 +102,10 @@ template <typename T> class vec4
     {
         return vec4(this->x * rhs, this->y * rhs, this->z * rhs, this->w * rhs);
     }
+    vec4 operator/(const fscalar &rhs) const
+    {
+        return vec4(this->x / rhs, this->y / rhs, this->z / rhs, this->w / rhs);
+    }
     T operator[](std::size_t index) const
     {
         return indices[index];
