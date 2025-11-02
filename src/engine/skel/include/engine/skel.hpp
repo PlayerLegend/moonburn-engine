@@ -20,8 +20,6 @@ using animation_sampler_output =
                  std::vector<vec::cubicspline<vec::fvec3>>,
                  std::vector<vec::cubicspline<vec::fvec4>>>;
 
-// using animation_sampler_input = std::vector<float>;
-
 class interpolation_params
 {
   public:
@@ -82,16 +80,6 @@ using animation_sampler =
                  animation_sampler_linear<vec::fvec4>,
                  animation_sampler_cubicspline<vec::fvec3>,
                  animation_sampler_cubicspline<vec::fvec4>>;
-
-// class animation_sampler
-// {
-//   public:
-//     const animation_sampler_input &input;
-//     animation_sampler_output output;
-//     gltf::animation_sampler_interpolation interpolation;
-//     animation_sampler(animation_sampler_input_unordered_set &all_inputs,
-//                       const gltf::animation_sampler &gltf_sampler);
-// };
 
 class animation_channel
 {

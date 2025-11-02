@@ -85,9 +85,6 @@ void skel::animation::add_channel(size_t input_index,
     if (!input_channel.target.node)
         return;
 
-    // skel::animation_bone &bone =
-    //     animation.bones[input_channel.target.node->name];
-
     skel::animation_sampler &sampler =
         samplers.at(input_animation.get_sampler_index(input_channel.sampler));
 
@@ -176,18 +173,6 @@ skel::animation::animation(const gltf::animation &gltf_animation,
     }
 }
 
-// bool input_times_compar(std::vector<float> &a, std::vector<float> &b)
-// {
-//     if (a.size() != b.size())
-//         return false;
-//     for (size_t i = 0, size = a.size(); i < size; i++)
-//     {
-//         if (std::abs(a[i] - b[i]) > vec::epsilon)
-//             return false;
-//     }
-//     return true;
-// }
-
 static size_t frame_find(const std::vector<float> &times, float time)
 {
     if (times.empty())
@@ -229,13 +214,6 @@ skel::animation_sampler_step<T>::animation_sampler_step(
     : output(gltf_sampler.output)
 {
 }
-
-// template <typename T>
-// T skel::animation_sampler_step<T>::operator[](float time) const
-// {
-//     size_t frame_index = frame_find(input, time);
-//     return output[frame_index];
-// }
 
 template <typename T>
 skel::animation_sampler_linear<T>::animation_sampler_linear(
@@ -433,7 +411,7 @@ skel::result::operator const std::vector<vec::fmat4> &()
 {
     if (output.size() != 0)
         return output;
-        
+
     output.reserve(transforms.size());
 
     for (const vec::transform3 &transform : transforms)
