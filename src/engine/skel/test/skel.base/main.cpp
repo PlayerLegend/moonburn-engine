@@ -32,6 +32,14 @@ int main(int argc, char *argv[])
 
     skel::animation animation(doc.get_animation(0), doc);
 
+    skel::result result(armature);
+
+    result.accumulate(animation, 0.2f, 1.0f);
+
+    const std::vector<vec::fmat4> &matrices = result;
+
+    std::cout << "Got " << matrices.size() << " bone matrices\n";
+
     std::cout << "Skeleton root name: " << armature.root_name << "\n";
 
     std::cout << "skel test: OK\n";
