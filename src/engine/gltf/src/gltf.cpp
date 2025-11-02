@@ -445,11 +445,15 @@ gltf::mesh_primitive::target::target(const json::object &root,
 }
 
 gltf::mesh_primitive::attributes::attributes(const json::object &root,
-                                              const gltf &gltf)
+                                             const gltf &gltf)
     : position(get_optional_accessor(root, "POSITION", gltf)),
       normal(get_optional_accessor(root, "NORMAL", gltf)),
       tangent(get_optional_accessor(root, "TANGENT", gltf)),
-      texcoord_0(get_optional_accessor(root, "TEXCOORD_0", gltf))
+      texcoord_0(get_optional_accessor(root, "TEXCOORD_0", gltf)),
+      texcoord_1(get_optional_accessor(root, "TEXCOORD_1", gltf)),
+      color_0(get_optional_accessor(root, "COLOR_0", gltf)),
+      joints(get_optional_accessor(root, "JOINTS_0", gltf)),
+      weights(get_optional_accessor(root, "WEIGHTS_0", gltf))
 {
 }
 

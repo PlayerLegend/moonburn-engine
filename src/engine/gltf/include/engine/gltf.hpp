@@ -275,6 +275,8 @@ class mesh_primitive
         const accessor *texcoord_0;
         const accessor *texcoord_1;
         const accessor *color_0;
+        const accessor *joints;
+        const accessor *weights;
         attributes(const json::object &root, const gltf &gltf);
     };
 
