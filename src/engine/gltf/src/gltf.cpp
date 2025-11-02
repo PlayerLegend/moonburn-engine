@@ -436,8 +436,7 @@ static const gltf::accessor *get_optional_accessor(const json::object &root,
     return nullptr;
 }
 
-gltf::mesh_primitive::target::target(const json::object &root,
-                                      const gltf &gltf)
+gltf::mesh_primitive::target::target(const json::object &root, const gltf &gltf)
     : position(get_optional_accessor(root, "POSITION", gltf)),
       normal(get_optional_accessor(root, "NORMAL", gltf)),
       tangent(get_optional_accessor(root, "TANGENT", gltf))
