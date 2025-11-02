@@ -1,0 +1,157 @@
+#include <engine/skel.hpp>
+
+static skel::bone_index find_index_of_node(const gltf::node *node,
+                                           const gltf::skin &skin)
+{
+    if (!node)
+        return -1;
+    for (size_t joint_index = 0; joint_index < skin.joints.size();
+         joint_index++)
+    {
+        if (node == skin.joints[joint_index])
+            return joint_index;
+    }
+    throw gltf::exception::parse_error("Node " + node->name +
+                                       " is not a joint in the skin");
+}
+
+static void armature_bone_add_child(std::vector<skel::armature_bone> &bones,
+                                    skel::bone_index parent_index,
+                                    skel::bone_index child_index)
+{
+    skel::armature_bone &parent_bone = bones[parent_index];
+    skel::armature_bone &child_bone = bones[child_index];
+    assert(child_bone.parent == std::numeric_limits<skel::bone_index>::max());
+    assert(child_bone.peer == std::numeric_limits<skel::bone_index>::max());
+    child_bone.peer = parent_bone.child;
+    child_bone.parent = parent_index;
+    parent_bone.child = child_index;
+}
+
+std::string find_skin_root_name(const gltf::skin &gltf_skin)
+{
+    const class gltf::node *root = gltf_skin.joints[0];
+    while (root->parent)
+        root = root->parent;
+    return root->name;
+}
+
+skel::armature::armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf)
+{
+    if (gltf_skin.inverse_bind_matrices)
+    {
+        inverse_bind_matrices =
+            gltf_skin.inverse_bind_matrices->operator std::vector<vec::fmat4>();
+    }
+    else
+    {
+        inverse_bind_matrices.resize(gltf_skin.joints.size());
+    }
+
+    default_transforms.reserve(gltf_skin.joints.size());
+    bones.resize(gltf_skin.joints.size());
+
+    for (size_t joint_index = 0; joint_index < gltf_skin.joints.size();
+         joint_index++)
+    {
+        const gltf::node &joint_node = *gltf_skin.joints[joint_index];
+        bones_names[joint_node.name] = joint_index;
+        default_transforms.push_back(joint_node.transform);
+        for (const gltf::node *child_node : joint_node.children)
+        {
+            skel::bone_index child_index =
+                find_index_of_node(child_node, gltf_skin);
+            armature_bone_add_child(bones, joint_index, child_index);
+        }
+    }
+
+    if (default_transforms.size() != inverse_bind_matrices.size())
+        throw gltf::exception::parse_error(
+            "Skin joint count does not match inverse bind matrix count");
+
+    root_name = find_skin_root_name(gltf_skin);
+}
+
+skel::animation_sampler::animation_sampler(
+    const ::gltf::animation_sampler &gltf_sampler)
+    : input(gltf_sampler.input), interpolation(gltf_sampler.interpolation)
+{
+
+    if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
+    {
+        if (interpolation == gltf::animation_sampler_interpolation::CUBICSPLINE)
+            output =
+                (std::vector<vec::cubicspline<vec::fvec3>>)gltf_sampler.output;
+        else if (interpolation ==
+                     gltf::animation_sampler_interpolation::LINEAR ||
+                 interpolation == gltf::animation_sampler_interpolation::STEP)
+            output = (std::vector<vec::fvec3>)gltf_sampler.output;
+        else
+            throw gltf::exception::parse_error(
+                "Unsupported interpolation type for VEC3 output");
+    }
+
+    if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
+    {
+        if (interpolation == gltf::animation_sampler_interpolation::CUBICSPLINE)
+            output =
+                (std::vector<vec::cubicspline<vec::fvec4>>)gltf_sampler.output;
+        else if (interpolation ==
+                     gltf::animation_sampler_interpolation::LINEAR ||
+                 interpolation == gltf::animation_sampler_interpolation::STEP)
+            output = (std::vector<vec::fvec4>)gltf_sampler.output;
+        else
+            throw gltf::exception::parse_error(
+                "Unsupported interpolation type for VEC4 output");
+    }
+    else
+    {
+        throw gltf::exception::parse_error(
+            "Unsupported accessor type for animation sampler output");
+    }
+}
+
+static void animation_add_channel(skel::animation &animation,
+                                  const gltf::animation &input_animation,
+                                  const gltf::animation_channel &input_channel)
+{
+    skel::animation_bone &bone =
+        animation.bones[input_channel.target.node->name];
+    skel::animation_sampler &sampler = animation.samplers.at(
+        input_animation.get_sampler_index(input_channel.sampler));
+
+    switch (input_channel.target.path)
+    {
+    case gltf::animation_channel_path::TRANSLATION:
+        bone.translation = &sampler;
+        break;
+    case gltf::animation_channel_path::ROTATION:
+        bone.rotation = &sampler;
+        break;
+    case gltf::animation_channel_path::SCALE:
+        bone.scale = &sampler;
+        break;
+    default:
+        throw gltf::exception::parse_error(
+            "Unsupported animation channel path");
+    }
+}
+
+skel::animation::animation(gltf::animation &gltf_animation,
+                             const gltf::gltf &gltf)
+{
+    samplers.reserve(gltf_animation.samplers.size());
+    
+    for (const gltf::animation_sampler &gltf_sampler :
+         gltf_animation.samplers)
+    {
+        skel::animation_sampler sampler(gltf_sampler);
+        samplers.push_back(std::move(sampler));
+    }
+
+    for (const gltf::animation_channel &gltf_channel :
+         gltf_animation.channels)
+    {
+        animation_add_channel(*this, gltf_animation, gltf_channel);
+    }
+}
