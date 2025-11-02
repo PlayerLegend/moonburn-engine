@@ -167,7 +167,6 @@ class result
     std::vector<vec::fmat4> output;
     const skel::armature &armature;
 
-    result(const class armature &armature);
     void accumulate_translation(bone_index bone,
                                 const vec::fvec3 &translation,
                                 float weight);
@@ -179,7 +178,7 @@ class result
 
   public:
     void clear();
-    operator std::vector<vec::fmat4> &();
+    operator const std::vector<vec::fmat4> &();
     void accumulate(const std::string &root_name,
                     const skel::animation &animation,
                     float time,
@@ -188,6 +187,7 @@ class result
     {
         accumulate(armature.root_name, animation, time, weight);
     }
+    result(const class armature &armature);
 };
 
 } // namespace skel

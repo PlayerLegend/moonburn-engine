@@ -428,7 +428,7 @@ void skel::result::accumulate_scale(bone_index bone,
     }
 }
 
-skel::result::operator std::vector<vec::fmat4> &()
+skel::result::operator const std::vector<vec::fmat4> &()
 {
     output.resize(0);
     output.reserve(transforms.size());
