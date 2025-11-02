@@ -157,12 +157,18 @@ class accessor
               enum component_type target_component_type,
               attribute_type target_attribute_type) const;
 
+    operator std::vector<float>() const;
     operator std::vector<vec::fvec3>() const;
+    operator std::vector<vec::fvec4>() const;
     operator std::vector<uint32_t>() const;
+    operator std::vector<uint16_t>() const;
     operator std::vector<vec::i16vec2>() const;
     operator std::vector<vec::i16vec4>() const;
     operator std::vector<vec::u16vec2>() const;
     operator std::vector<vec::u8vec4>() const;
+    operator std::vector<vec::fmat4>() const;
+    operator std::vector<vec::cubicspline<vec::fvec3>>() const;
+    operator std::vector<vec::cubicspline<vec::fvec4>>() const;
 };
 
 class image

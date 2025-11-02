@@ -910,6 +910,23 @@ static uint8_t u8_from_float(float value)
     return static_cast<uint8_t>(std::round(value * 255.0f));
 }
 
+::gltf::accessor::operator std::vector<float>() const
+{
+    if (type != attribute_type::SCALAR)
+        throw exception::parse_error("Accessor type is not SCALAR, cannot "
+                                     "convert to std::vector<float>");
+
+    std::vector<float> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(get_component_as_float(i, 0));
+    }
+
+    return result;
+}
+
 ::gltf::accessor::operator std::vector<vec::fvec3>() const
 {
     if (type != attribute_type::VEC3)
@@ -929,6 +946,26 @@ static uint8_t u8_from_float(float value)
     return result;
 }
 
+::gltf::accessor::operator std::vector<vec::fvec4>() const
+{
+    if (type != attribute_type::VEC4)
+        throw exception::parse_error("Accessor type is not VEC4, cannot "
+                                     "convert to std::vector<vec::fvec4>");
+
+    std::vector<vec::fvec4> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(vec::fvec4(get_component_as_float(i, 0),
+                                    get_component_as_float(i, 1),
+                                    get_component_as_float(i, 2),
+                                    get_component_as_float(i, 3)));
+    }
+
+    return result;
+}
+
 ::gltf::accessor::operator std::vector<uint32_t>() const
 {
     if (type != attribute_type::SCALAR)
@@ -936,6 +973,23 @@ static uint8_t u8_from_float(float value)
                                      "convert to std::vector<uint32_t>");
 
     std::vector<uint32_t> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(get_component_as_index(i, 0));
+    }
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<uint16_t>() const
+{
+    if (type != attribute_type::SCALAR)
+        throw exception::parse_error("Accessor type is not SCALAR, cannot "
+                                     "convert to std::vector<uint16_t>");
+
+    std::vector<uint16_t> result;
     result.reserve(count);
 
     for (size_t i = 0; i < count; i++)
@@ -1036,7 +1090,106 @@ static uint8_t u8_from_float(float value)
                                          get_component_as_index(i, 3)));
         }
     }
-    
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::fmat4>() const
+{
+    if (type != attribute_type::MAT4)
+        throw exception::parse_error("Accessor type is not MAT4, cannot "
+                                     "convert to std::vector<vec::fmat4>");
+
+    std::vector<vec::fmat4> result;
+    result.reserve(count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        result.push_back(vec::fmat4(get_component_as_float(i, 0),
+                                    get_component_as_float(i, 1),
+                                    get_component_as_float(i, 2),
+                                    get_component_as_float(i, 3),
+                                    get_component_as_float(i, 4),
+                                    get_component_as_float(i, 5),
+                                    get_component_as_float(i, 6),
+                                    get_component_as_float(i, 7),
+                                    get_component_as_float(i, 8),
+                                    get_component_as_float(i, 9),
+                                    get_component_as_float(i, 10),
+                                    get_component_as_float(i, 11),
+                                    get_component_as_float(i, 12),
+                                    get_component_as_float(i, 13),
+                                    get_component_as_float(i, 14),
+                                    get_component_as_float(i, 15)));
+    }
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::cubicspline<vec::fvec3>>() const
+{
+    if (type != attribute_type::VEC3)
+        throw exception::parse_error("Accessor type is not VEC3, cannot "
+                                     "convert to std::vector<vec::cubicspline<"
+                                     "fvec3>>");
+
+    if (count % 3 != 0)
+        throw exception::parse_error(
+            "Accessor count is not a multiple of 3, cannot convert to "
+            "std::vector<vec::cubicspline<fvec3>>");
+
+    std::vector<vec::cubicspline<vec::fvec3>> result;
+    result.reserve(count / 3);
+
+    for (size_t i = 0; i < count; i += 3)
+    {
+        result.push_back(vec::cubicspline<vec::fvec3>(
+            vec::fvec3(get_component_as_float(i, 0),
+                       get_component_as_float(i, 1),
+                       get_component_as_float(i, 2)),
+            vec::fvec3(get_component_as_float(i + 1, 0),
+                       get_component_as_float(i + 1, 1),
+                       get_component_as_float(i + 1, 2)),
+            vec::fvec3(get_component_as_float(i + 2, 0),
+                       get_component_as_float(i + 2, 1),
+                       get_component_as_float(i + 2, 2))));
+    }
+
+    return result;
+}
+
+::gltf::accessor::operator std::vector<vec::cubicspline<vec::fvec4>>() const
+{
+    if (type != attribute_type::VEC4)
+        throw exception::parse_error("Accessor type is not VEC4, cannot "
+                                     "convert to std::vector<vec::cubicspline<"
+                                     "fvec4>>");
+
+    if (count % 3 != 0)
+        throw exception::parse_error(
+            "Accessor count is not a multiple of 3, cannot convert to "
+            "std::vector<vec::cubicspline<fvec4>>");
+
+    std::vector<vec::cubicspline<vec::fvec4>> result;
+    result.reserve(count / 3);
+
+    for (size_t i = 0; i < count; i += 3)
+    {
+        result.push_back(vec::cubicspline<vec::fvec4>(
+            vec::fvec4(get_component_as_float(i, 0),
+                       get_component_as_float(i, 1),
+                       get_component_as_float(i, 2),
+                       get_component_as_float(i, 3)),
+            vec::fvec4(get_component_as_float(i + 1, 0),
+                       get_component_as_float(i + 1, 1),
+                       get_component_as_float(i + 1, 2),
+                       get_component_as_float(i + 1, 3)),
+            vec::fvec4(get_component_as_float(i + 2, 0),
+                       get_component_as_float(i + 2, 1),
+                       get_component_as_float(i + 2, 2),
+                       get_component_as_float(i + 2, 3))));
+    }
+
     return result;
 }
 
