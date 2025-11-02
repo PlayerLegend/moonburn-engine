@@ -782,7 +782,7 @@ parse_animation_channel_path(const std::string &name)
     if (_meshes)
         meshes.reserve(_meshes->size());
     if (_nodes)
-        nodes.reserve(_nodes->size());
+        nodes.resize(_nodes->size());
     if (_skins)
         skins.reserve(_skins->size());
     if (_scenes)
@@ -820,9 +820,13 @@ parse_animation_channel_path(const std::string &name)
         for (const json::object &mesh : *_meshes)
             meshes.push_back(::gltf::mesh(mesh, *this));
 
+    if (_skins)
+        for (const json::object &skin : *_skins)
+            skins.push_back(::gltf::skin(skin, *this));
+
     if (_nodes)
-        for (const json::object &node : *_nodes)
-            nodes.push_back(::gltf::node(node, *this));
+        for (size_t i = 0, size = _nodes->size(); i < size; i++)
+            nodes[i] = ::gltf::node((*_nodes)[i], *this);
 
     if (_scenes)
         for (const json::object &scene : *_scenes)
