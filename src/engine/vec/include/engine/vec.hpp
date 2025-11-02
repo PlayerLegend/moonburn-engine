@@ -56,11 +56,6 @@ template <typename T> class vec3
         return vec3(this->x / rhs, this->y / rhs, this->z / rhs);
     }
 
-    vec3 normal() const;
-    vec3 cross(const vec3 &other) const;
-    float dot(const vec3 &other) const;
-    float length() const;
-
     class decompose
     {
       public:
@@ -191,5 +186,17 @@ template <typename T> class cubicspline
     {
     }
 };
+
+fscalar length(const fvec3 &v);
+fvec3 normal(const fvec3 &v);
+fscalar dot(const fvec3 &a, const fvec3 &b);
+fvec3 cross(const fvec3 &a, const fvec3 &b);
+
+fvec3 lerp(const fvec3 &a, const fvec3 &b, float t);
+fscalar length(const fvec4 &v);
+fvec4 normal(const fvec4 &v);
+fscalar dot(const fvec4 &a, const fvec4 &b);
+fvec4 slerp(const fvec4 &a, const fvec4 &b, float t);
+
 
 }; // namespace vec

@@ -17,21 +17,6 @@ template <> vec::fmat4 vec::fmat4::operator*(const fmat4 &rhs) const
     return result;
 }
 
-template <> vec::fvec3::decompose::decompose(vec::fvec3 v)
-{
-    distance = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-    if (distance > 0.00001f)
-    {
-        normal = v / distance;
-    }
-    else
-    {
-        normal.x = 0.0f;
-        normal.y = 0.0f;
-        normal.z = 0.0f;
-    }
-}
-
 template <> vec::fvec4 vec::fvec4::operator*(const vec::fvec4 &rhs) const
 {
     vec::fvec4 result;
@@ -65,3 +50,87 @@ template <> vec::fvec4 vec::fmat4::operator*(const vec::fvec4 &rhs) const
     }
     return result;
 }
+
+vec::fscalar vec::length(const fvec3 &v)
+{
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+vec::fvec3 vec::normal(const fvec3 &v)
+{
+    float len = length(v);
+    if (len > 0.00001f)
+    {
+        return v / len;
+    }
+    else
+    {
+        return fvec3(0.0f, 0.0f, 0.0f);
+    }
+}
+
+vec::fscalar vec::dot(const fvec3 &a, const fvec3 &b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+vec::fvec3 vec::cross(const fvec3 &a, const fvec3 &b)
+{
+    return fvec3(a.y * b.z - a.z * b.y,
+                 a.z * b.x - a.x * b.z,
+                 a.x * b.y - a.y * b.x);
+}
+
+vec::fvec3 vec::lerp(const fvec3 &a, const fvec3 &b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
+
+template <> vec::fvec3::decompose::decompose(vec::fvec3 v)
+{
+    distance = vec::length(v);
+    if (distance > vec::epsilon)
+        normal = v / distance;
+    else
+        normal = vec::fvec3(0.0f, 0.0f, 0.0f);
+}
+
+float vec::length(const fvec4 &v)
+{
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+}
+vec::fvec4 vec::normal(const fvec4 &v)
+{
+    float len = length(v);
+    if (len > 0.00001f)
+    {
+        return v / len;
+    }
+    else
+    {
+        return fvec4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+}
+vec::fscalar vec::dot(const fvec4 &a, const fvec4 &b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+vec::fvec4 vec::slerp(const fvec4 &a, const fvec4 &b, float t)
+{
+    float angle = std::acos(vec::dot(a, b));
+
+    if (std::abs(angle) < 0.0001f)
+    {
+        return a;
+    }
+    else
+    {
+
+        vec::fscalar inv_denominator = 1.0f / std::sin(angle);
+        vec::fscalar factor_a = std::sin((1.0f - t) * angle) * inv_denominator;
+        vec::fscalar factor_b = std::sin(t * angle) * inv_denominator;
+        return a * factor_a + b * factor_b;
+    }
+}
+
