@@ -364,6 +364,7 @@ void skel::result::clear()
     transforms = armature.default_transforms;
     weights.resize(0);
     weights.resize(transforms.size());
+    output.resize(0);
 }
 
 void skel::result::accumulate_translation(bone_index bone,
@@ -430,7 +431,9 @@ void skel::result::accumulate_scale(bone_index bone,
 
 skel::result::operator const std::vector<vec::fmat4> &()
 {
-    output.resize(0);
+    if (output.size() != 0)
+        return output;
+        
     output.reserve(transforms.size());
 
     for (const vec::transform3 &transform : transforms)
@@ -486,6 +489,8 @@ void skel::result::accumulate(const std::string &root_name,
                               float time,
                               float weight)
 {
+    output.resize(0);
+
     std::vector<skel::bone_index> bone_hierarchy =
         get_bone_hierarchy(armature, armature.bones_names.at(root_name));
 
