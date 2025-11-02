@@ -140,7 +140,7 @@ void test_example1(const std::string &path)
         std::exit(2);
     }
 
-    const gltf::mesh::primitive &prim = mesh.primitives[0];
+    const gltf::mesh_primitive &prim = mesh.primitives[0];
     if (!prim.attributes.position || !prim.attributes.normal ||
         !prim.attributes.texcoord_0)
     {
