@@ -138,19 +138,17 @@ static void animation_add_channel(skel::animation &animation,
 }
 
 skel::animation::animation(gltf::animation &gltf_animation,
-                             const gltf::gltf &gltf)
+                           const gltf::gltf &gltf)
 {
     samplers.reserve(gltf_animation.samplers.size());
-    
-    for (const gltf::animation_sampler &gltf_sampler :
-         gltf_animation.samplers)
+
+    for (const gltf::animation_sampler &gltf_sampler : gltf_animation.samplers)
     {
         skel::animation_sampler sampler(gltf_sampler);
         samplers.push_back(std::move(sampler));
     }
 
-    for (const gltf::animation_channel &gltf_channel :
-         gltf_animation.channels)
+    for (const gltf::animation_channel &gltf_channel : gltf_animation.channels)
     {
         animation_add_channel(*this, gltf_animation, gltf_channel);
     }
