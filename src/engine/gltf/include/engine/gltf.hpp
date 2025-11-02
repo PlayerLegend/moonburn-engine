@@ -8,6 +8,11 @@
 #include <optional>
 #include <string>
 
+namespace skel
+{
+
+};
+
 namespace gltf
 {
 namespace exception
