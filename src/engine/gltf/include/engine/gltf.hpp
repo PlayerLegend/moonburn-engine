@@ -307,18 +307,19 @@ class node
 {
   public:
     std::string name;
-    const class skin *skin;
+    const class skin *skin = NULL;
     vec::transform3 transform;
     std::vector<const node *> children;
-    const class mesh *mesh;
+    const class mesh *mesh = NULL;
+    const node *parent = NULL;
     node(const json::object &root, const gltf &gltf);
-    node();
+    node() {};
 };
 class skin
 {
   public:
     std::string name;
-    const accessor &inverse_bind_matrices;
+    const accessor *inverse_bind_matrices;
     const node *skeleton;
     std::vector<const node *> joints;
     skin(const json::object &root, const gltf &gltf);
@@ -342,6 +343,79 @@ class scene
     std::string name;
     std::vector<const node *> nodes;
     scene(const json::object &root, const gltf &gltf);
+};
+
+enum class animation_channel_path : uint8_t
+{
+    TRANSLATION,
+    ROTATION,
+    SCALE
+};
+
+enum class animation_sampler_interpolation : uint8_t
+{
+    LINEAR,
+    STEP,
+    CUBICSPLINE
+};
+
+class animation_sampler
+{
+  public:
+    const accessor &input;
+    const accessor &output;
+    enum animation_sampler_interpolation interpolation;
+    animation_sampler(const json::object &root, const gltf &gltf);
+};
+
+class animation_channel_target
+{
+  public:
+    const class node *node = NULL;
+    enum animation_channel_path path;
+    animation_channel_target(const json::object &root, const gltf &gltf);
+};
+
+class animation_channel
+{
+  public:
+    const animation_channel_target target;
+    const animation_sampler &sampler;
+    std::string name;
+    animation_channel(const json::object &root,
+                      const gltf &gltf,
+                      const std::vector<animation_sampler> &samplers);
+};
+
+class animation
+{
+  public:
+    std::vector<animation_sampler> samplers;
+    std::vector<animation_channel> channels;
+    std::string name;
+    const animation_sampler &get_sampler(size_t index) const
+    {
+        if (index >= samplers.size())
+            throw ::gltf::exception::parse_error(
+                "Animation sampler index out of range");
+        return samplers[index];
+    }
+    const animation_channel &get_channel(size_t index) const
+    {
+        if (index >= channels.size())
+            throw ::gltf::exception::parse_error(
+                "Animation channel index out of range");
+        return channels[index];
+    }
+    std::size_t get_sampler_index(const animation_sampler &sampler) const
+    {
+        size_t result = &sampler - samplers.data();
+        if (result >= samplers.size())
+            throw ::gltf::exception::parse_error(
+                "Animation sampler not part of animation");
+        return result;
+    }
+    animation(const json::object &root, const gltf &gltf);
 };
 
 class gltf

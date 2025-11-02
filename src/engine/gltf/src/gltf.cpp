@@ -639,6 +639,106 @@ static const json::array *get_optional_array(const json::object &root,
     return nullptr;
 }
 
+enum gltf::animation_sampler_interpolation
+parse_animation_sampler_interpolation(const std::string &name)
+{
+    if (name == "LINEAR")
+        return gltf::animation_sampler_interpolation::LINEAR;
+    if (name == "STEP")
+        return gltf::animation_sampler_interpolation::STEP;
+    if (name == "CUBICSPLINE")
+        return gltf::animation_sampler_interpolation::CUBICSPLINE;
+    throw gltf::exception::parse_error(
+        "Invalid animation sampler interpolation: " + name);
+}
+
+::gltf::animation_sampler::animation_sampler(const json::object &root,
+                                             const gltf &gltf)
+    : input(gltf.get_accessor(root.at("input").strict_int())),
+      output(gltf.get_accessor(root.at("output").strict_int())),
+      interpolation(parse_animation_sampler_interpolation(
+          get_string(root, "interpolation", "LINEAR")))
+{
+}
+
+enum gltf::animation_channel_path
+parse_animation_channel_path(const std::string &name)
+{
+    if (name == "translation")
+        return gltf::animation_channel_path::TRANSLATION;
+    if (name == "rotation")
+        return gltf::animation_channel_path::ROTATION;
+    if (name == "scale")
+        return gltf::animation_channel_path::SCALE;
+    throw gltf::exception::parse_error("Invalid animation channel path: " +
+                                       name);
+}
+
+::gltf::animation_channel_target::animation_channel_target(
+    const json::object &root,
+    const gltf &gltf)
+    : path(parse_animation_channel_path(get_string(root, "path")))
+{
+    json::object::const_iterator node_it = root.find("node");
+    if (node_it != root.end())
+        node = &gltf.get_node(node_it->second.strict_int());
+}
+
+::gltf::animation_channel::animation_channel(
+    const json::object &root,
+    const gltf &gltf,
+    const std::vector<animation_sampler> &samplers)
+    : target(animation_channel_target(root.at("target"), gltf)),
+      sampler(samplers.at(root.at("sampler").strict_int())),
+      name(get_string(root, "name"))
+{
+}
+
+::gltf::animation::animation(const json::object &root, const gltf &gltf)
+    : name(get_string(root, "name"))
+{
+    json::object::const_iterator samplers_it = root.find("samplers");
+    if (samplers_it != root.end())
+    {
+        const json::array &samplers_array = samplers_it->second;
+
+        samplers.reserve(samplers_array.size());
+
+        for (const json::object &sampler : samplers_array)
+            samplers.push_back(::gltf::animation_sampler(sampler, gltf));
+    }
+
+    json::object::const_iterator channels_it = root.find("channels");
+    if (channels_it != root.end())
+    {
+        const json::array &channels_array = channels_it->second;
+
+        channels.reserve(channels_array.size());
+
+        for (const json::object &channel : channels_array)
+            channels.push_back(
+                ::gltf::animation_channel(channel, gltf, samplers));
+    }
+}
+
+::gltf::skin::skin(const json::object &root, const gltf &gltf)
+    : name(get_string(root, "name"))
+{
+    json::object::const_iterator inverse_bind_matrices_it =
+        root.find("inverseBindMatrices");
+    if (inverse_bind_matrices_it != root.end())
+        inverse_bind_matrices =
+            &gltf.get_accessor(inverse_bind_matrices_it->second.strict_int());
+
+    json::object::const_iterator skeleton_it = root.find("skeleton");
+    if (skeleton_it != root.end())
+        skeleton = &gltf.get_node(skeleton_it->second.strict_int());
+
+    const json::array &joints_array = root.at("joints");
+    for (const json::value &joint : joints_array)
+        joints.push_back(&gltf.get_node(joint.strict_int()));
+}
+
 ::gltf::gltf::gltf(const std::string &_path,
                    ::filesystem::cache_binary &fs_bin,
                    ::image::rgba32_cache &fs_img)
