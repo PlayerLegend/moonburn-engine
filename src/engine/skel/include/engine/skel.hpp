@@ -20,7 +20,66 @@ using animation_sampler_output =
                  std::vector<vec::cubicspline<vec::fvec3>>,
                  std::vector<vec::cubicspline<vec::fvec4>>>;
 
-using animation_sampler_input = std::vector<float>;
+// using animation_sampler_input = std::vector<float>;
+
+class animation_sampler_input
+{
+  public:
+    class frame_params
+    {
+      public:
+        float tc;
+        float td;
+        float t;
+        float t_inv;
+
+        float t_before;
+        float t_after;
+
+        size_t i_before;
+
+        // Hermite basis (blending) functions
+        float h00;
+        float h10;
+        float h01;
+        float h11;
+
+        bool clamp;
+
+        const std::vector<float> &times;
+        frame_params(const std::vector<float> &times) : times(times) {}
+
+        void update(float time);
+    };
+
+  private:
+    std::vector<float> times;
+    frame_params cache;
+
+  public:
+    animation_sampler_input(const gltf::accessor &accessor) : cache(times)
+    {
+        times = accessor;
+    }
+    float operator[](size_t index) const
+    {
+        return times[index];
+    }
+    size_t size() const
+    {
+        return times.size();
+    }
+    const float *data() const
+    {
+        return times.data();
+    }
+    const frame_params &get_frame_params(float time)
+    {
+        cache.update(time);
+        return cache;
+    }
+};
+
 class animation_sampler_input_hash
 {
   public:
@@ -63,15 +122,57 @@ using animation_sampler_input_unordered_set =
                        animation_sampler_input_hash,
                        animation_sampler_input_equal>;
 
-class animation_sampler
+template <typename T> class animation_sampler_step
 {
+    animation_sampler_input &input;
+    const std::vector<T> &output;
+
   public:
-    const animation_sampler_input &input;
-    animation_sampler_output output;
-    gltf::animation_sampler_interpolation interpolation;
-    animation_sampler(animation_sampler_input_unordered_set &all_inputs,
-                      const gltf::animation_sampler &gltf_sampler);
+    animation_sampler_step(animation_sampler_input_unordered_set &all_inputs,
+                           const gltf::animation_sampler &gltf_sampler);
+    T operator[](float);
 };
+
+template <typename T> class animation_sampler_linear
+{
+    animation_sampler_input &input;
+    const std::vector<T> &output;
+
+  public:
+    animation_sampler_linear(animation_sampler_input_unordered_set &all_inputs,
+                             const gltf::animation_sampler &gltf_sampler);
+    T operator[](float);
+};
+
+template <typename T> class animation_sampler_cubicspline
+{
+    animation_sampler_input &input;
+    const std::vector<vec::cubicspline<T>> &output;
+
+  public:
+    animation_sampler_cubicspline(
+        animation_sampler_input_unordered_set &all_inputs,
+        const gltf::animation_sampler &gltf_sampler);
+    T operator[](float);
+};
+
+using animation_sampler =
+    std::variant<animation_sampler_step<vec::fvec3>,
+                 animation_sampler_step<vec::fvec4>,
+                 animation_sampler_linear<vec::fvec3>,
+                 animation_sampler_linear<vec::fvec4>,
+                 animation_sampler_cubicspline<vec::fvec3>,
+                 animation_sampler_cubicspline<vec::fvec4>>;
+
+// class animation_sampler
+// {
+//   public:
+//     const animation_sampler_input &input;
+//     animation_sampler_output output;
+//     gltf::animation_sampler_interpolation interpolation;
+//     animation_sampler(animation_sampler_input_unordered_set &all_inputs,
+//                       const gltf::animation_sampler &gltf_sampler);
+// };
 
 class animation_channel
 {
@@ -94,12 +195,13 @@ class animation
     animation_sampler_input_unordered_set all_inputs;
     std::unordered_map<std::string, animation_bone> bones;
     std::vector<animation_sampler> samplers;
-    animation(gltf::animation &gltf_animation, const gltf::gltf &gltf);
+    animation(const gltf::animation &gltf_animation, const gltf::gltf &gltf);
 };
 
 class armature_bone
 {
   public:
+    std::string name;
     bone_index child;
     bone_index peer;
     bone_index parent;
@@ -123,16 +225,21 @@ class armature
 
 class result
 {
-    vec::fvec3 value_translation[max_bones];
-    float weight_translation[max_bones];
-    vec::fvec4 value_rotation[max_bones];
-    float weight_rotation[max_bones];
-    vec::fvec3 value_scale[max_bones];
-    float weight_scale[max_bones];
-    vec::fmat4 transforms[max_bones];
+    class transform_weight
+    {
+      public:
+        float translation;
+        float rotation;
+        float scale;
+        transform_weight() : translation(0), rotation(0), scale(0) {}
+    };
 
-    bone_index count = 0;
-    result(const armature &armature);
+    std::vector<transform_weight> weights;
+    std::vector<vec::transform3> transforms;
+    std::vector<vec::fmat4> output;
+    const skel::armature &armature;
+
+    result(const class armature &armature);
     void accumulate_translation(bone_index bone,
                                 const vec::fvec3 &translation,
                                 float weight);
@@ -141,10 +248,18 @@ class result
                              float weight);
     void
     accumulate_scale(bone_index bone, const vec::fvec3 &scale, float weight);
-    vec::transform3 get_final_transform(bone_index bone) const;
 
   public:
-    const vec::fmat4 *get_transforms() const;
+    void clear();
+    operator std::vector<vec::fmat4> &();
+    void accumulate(const std::string &root_name,
+                    const skel::animation &animation,
+                    float time,
+                    float weight);
+    void accumulate(const skel::animation &animation, float time, float weight)
+    {
+        accumulate(armature.root_name, animation, time, weight);
+    }
 };
 
 } // namespace skel

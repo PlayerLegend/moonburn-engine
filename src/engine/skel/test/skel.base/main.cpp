@@ -1,7 +1,7 @@
 #include <engine/gltf.hpp>
 #include <engine/skel.hpp>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
     }
 
     std::filesystem::path glb_path(argv[1]);
-
 
     filesystem::whitelist wl(glb_path.parent_path().string());
     filesystem::cache_binary fs_bin(wl);
@@ -29,8 +28,9 @@ int main(int argc, char *argv[])
     }
     const gltf::gltf &doc = *ref;
 
-    const gltf::skin &gltf_skin = doc.get_skin(0);
-    skel::armature armature(gltf_skin, doc);
+    skel::armature armature(doc.get_skin(0), doc);
+
+    skel::animation animation(doc.get_animation(0), doc);
 
     std::cout << "Skeleton root name: " << armature.root_name << "\n";
 
