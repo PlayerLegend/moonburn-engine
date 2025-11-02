@@ -1,12 +1,10 @@
-#include <engine/json.hpp>
 #include <assert.h>
+#include <engine/json.hpp>
 #include <iostream>
 
-int main(int argc, char *argv[])
+void test_json_1(const std::string &file_path)
 {
-    assert(argc == 2);
-
-    json::value root = json::parse_file(argv[1]);
+    json::value root = json::parse_file(file_path);
 
     json::object key1 = root["key1"];
     json::number ababab = root["ababab"];
@@ -22,6 +20,19 @@ int main(int argc, char *argv[])
     assert(nest1["nest2"].strict_float() == 3.14);
     assert(nest1["nest3"] == "aaa");
     assert(nest1["nest4"] == "abc");
+}
+
+void test_json_2(const std::string &file_path)
+{
+    json::value root = json::parse_file(file_path);
+}
+
+int main(int argc, char *argv[])
+{
+    assert(argc == 3);
+
+    test_json_1(argv[1]);
+    test_json_2(argv[2]);
 
     std::cout << "Success\n";
 }

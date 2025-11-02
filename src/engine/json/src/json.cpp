@@ -164,30 +164,6 @@ static json::string parse_string(state &state)
     throw state.get_exception("Input ended while parsing string");
 }
 
-static json::number parse_octal(state &state)
-{
-    if (state.next() != '0')
-        throw state.get_exception("Expected an octal number");
-
-    json::number_int result = 0;
-
-    while (state.point < state.end)
-    {
-        char c = state.peek();
-
-        if (c < '0' || c >= '8')
-            break;
-
-        state.next();
-
-        unsigned char digit = c - '0';
-
-        result = digit + result * 8;
-    }
-
-    return result;
-}
-
 json::number_int parse_digits(state &state)
 {
     uint64_t result = 0;
@@ -412,8 +388,6 @@ static json::value parse_value(state &state)
             return parse_array(state);
         if (c == '"')
             return parse_string(state);
-        if (c == '0')
-            return parse_octal(state);
         if (isdigit(c) || c == '-')
             return parse_number(state);
         if (c == 't' || c == 'f')
