@@ -1039,3 +1039,192 @@ static uint8_t u8_from_float(float value)
     
     return result;
 }
+
+template <typename T>
+static void append_type(std::vector<uint8_t> &output, const T &input)
+{
+    output.resize(output.size() + sizeof(T));
+    T *end = reinterpret_cast<T *>(&output.end()[0]);
+    T *dest = end - 1;
+    *dest = input;
+}
+
+void gltf::accessor::dump_uint32(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::SCALAR)
+        throw exception::parse_error(
+            "Accessor type is not SCALAR, cannot dump to uint32_t");
+
+    output.reserve(output.size() + count * sizeof(uint32_t));
+    for (size_t i = 0; i < count; i++)
+        append_type<uint32_t>(output, get_component_as_index(i, 0));
+}
+
+void gltf::accessor::dump_uint16(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::SCALAR)
+        throw exception::parse_error(
+            "Accessor type is not SCALAR, cannot dump to uint16_t");
+
+    output.reserve(output.size() + count * sizeof(uint16_t));
+    for (size_t i = 0; i < count; i++)
+        append_type<uint16_t>(
+            output,
+            static_cast<uint16_t>(get_component_as_index(i, 0)));
+}
+
+void gltf::accessor::dump_fvec3(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC3)
+        throw exception::parse_error(
+            "Accessor type is not VEC3, cannot dump to fvec3");
+
+    output.reserve(output.size() + count * 3 * sizeof(float));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::fvec3>(output,
+                                vec::fvec3(get_component_as_float(i, 0),
+                                           get_component_as_float(i, 1),
+                                           get_component_as_float(i, 2)));
+    }
+}
+
+void gltf::accessor::dump_i16vec2(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC2)
+        throw exception::parse_error(
+            "Accessor type is not VEC2, cannot dump to i16vec2");
+
+    output.reserve(output.size() + count * 2 * sizeof(int16_t));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::i16vec2>(
+            output,
+            vec::i16vec2(i16_from_float(get_component_as_float(i, 0)),
+                         i16_from_float(get_component_as_float(i, 1))));
+    }
+}
+
+void gltf::accessor::dump_i16vec4(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC4)
+        throw exception::parse_error(
+            "Accessor type is not VEC4, cannot dump to i16vec4");
+
+    output.reserve(output.size() + count * 4 * sizeof(int16_t));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::i16vec4>(
+            output,
+            vec::i16vec4(i16_from_float(get_component_as_float(i, 0)),
+                         i16_from_float(get_component_as_float(i, 1)),
+                         i16_from_float(get_component_as_float(i, 2)),
+                         i16_from_float(get_component_as_float(i, 3))));
+    }
+}
+
+void gltf::accessor::dump_u16vec2(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC2)
+        throw exception::parse_error(
+            "Accessor type is not VEC2, cannot dump to u16vec2");
+
+    output.reserve(output.size() + count * 2 * sizeof(uint16_t));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::u16vec2>(
+            output,
+            vec::u16vec2(u16_from_float(get_component_as_float(i, 0)),
+                         u16_from_float(get_component_as_float(i, 1))));
+    }
+}
+
+void gltf::accessor::dump_u8vec4(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC4)
+        throw exception::parse_error(
+            "Accessor type is not VEC4, cannot dump to u8vec4");
+
+    output.reserve(output.size() + count * 4 * sizeof(uint8_t));
+    if (normalized)
+    {
+        for (size_t i = 0; i < count; i++)
+        {
+            append_type<vec::u8vec4>(
+                output,
+                vec::u8vec4(u8_from_float(get_component_as_float(i, 0)),
+                            u8_from_float(get_component_as_float(i, 1)),
+                            u8_from_float(get_component_as_float(i, 2)),
+                            u8_from_float(get_component_as_float(i, 3))));
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < count; i++)
+        {
+            append_type<vec::u8vec4>(output,
+                                     vec::u8vec4(get_component_as_index(i, 0),
+                                                 get_component_as_index(i, 1),
+                                                 get_component_as_index(i, 2),
+                                                 get_component_as_index(i, 3)));
+        }
+    }
+}
+
+void gltf::accessor::dump(std::vector<uint8_t> &output,
+                          enum component_type target_component_type,
+                          attribute_type target_attribute_type) const
+{
+    switch (target_attribute_type)
+    {
+    case attribute_type::SCALAR:
+        switch (target_component_type)
+        {
+        case component_type::UINT:
+            dump_uint32(output);
+            return;
+        case component_type::USHORT:
+            dump_uint16(output);
+            return;
+        default:
+            throw exception::parse_error(
+                "Unsupported target component type for SCALAR attribute");
+        }
+    case attribute_type::VEC3:
+        if (target_component_type == component_type::FLOAT)
+        {
+            dump_fvec3(output);
+            return;
+        }
+        throw exception::parse_error(
+            "Unsupported target component type for VEC3 attribute");
+    case attribute_type::VEC2:
+        if (target_component_type == component_type::SHORT)
+        {
+            dump_i16vec2(output);
+            return;
+        }
+        if (target_component_type == component_type::USHORT)
+        {
+            dump_u16vec2(output);
+            return;
+        }
+        throw exception::parse_error(
+            "Unsupported target component type for VEC2 attribute");
+    case attribute_type::VEC4:
+        if (target_component_type == component_type::SHORT)
+        {
+            dump_i16vec4(output);
+            return;
+        }
+        if (target_component_type == component_type::UBYTE)
+        {
+            dump_u8vec4(output);
+            return;
+        }
+        throw exception::parse_error(
+            "Unsupported target component type for VEC4 attribute");
+    default:
+        throw exception::parse_error("Unsupported target attribute type");
+    }
+}

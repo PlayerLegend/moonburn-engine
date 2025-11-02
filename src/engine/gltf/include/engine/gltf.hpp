@@ -146,6 +146,17 @@ class accessor
                attribute_index * stride + component_index * component_size;
     }
 
+    void dump_uint32(std::vector<uint8_t> &out) const;
+    void dump_uint16(std::vector<uint8_t> &out) const;
+    void dump_fvec3(std::vector<uint8_t> &out) const;
+    void dump_i16vec2(std::vector<uint8_t> &out) const;
+    void dump_i16vec4(std::vector<uint8_t> &out) const;
+    void dump_u16vec2(std::vector<uint8_t> &out) const;
+    void dump_u8vec4(std::vector<uint8_t> &out) const;
+    void dump(std::vector<uint8_t> &out,
+              enum component_type target_component_type,
+              attribute_type target_attribute_type) const;
+
     operator std::vector<vec::fvec3>() const;
     operator std::vector<uint32_t>() const;
     operator std::vector<vec::i16vec2>() const;
