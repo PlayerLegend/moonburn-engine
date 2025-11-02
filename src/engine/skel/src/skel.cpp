@@ -500,8 +500,9 @@ void skel::result::accumulate(const std::string &root_name,
                             vec::fvec3> &sampler =
                             std::get<skel::animation_sampler_step<vec::fvec3>>(
                                 channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_translation(bone_index, value, weight);
+                        accumulate_translation(bone_index,
+                                               sampler[params],
+                                               weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_linear<vec::fvec3>>(
@@ -511,8 +512,9 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler = std::get<
                                 skel::animation_sampler_linear<vec::fvec3>>(
                                 channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_translation(bone_index, value, weight);
+                        accumulate_translation(bone_index,
+                                               sampler[params],
+                                               weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_cubicspline<
@@ -522,8 +524,9 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler =
                                 std::get<skel::animation_sampler_cubicspline<
                                     vec::fvec3>>(channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_translation(bone_index, value, weight);
+                        accumulate_translation(bone_index,
+                                               sampler[params],
+                                               weight);
                     }
                     else
                     {
@@ -542,8 +545,9 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler = std::get<skel::animation_sampler_step<
 
                                 vec::fvec4>>(channel.sampler);
-                        vec::fvec4 value = sampler[params];
-                        accumulate_rotation(bone_index, value, weight);
+                        accumulate_rotation(bone_index,
+                                            sampler[params],
+                                            weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_linear<vec::fvec4>>(
@@ -553,8 +557,9 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler = std::get<
                                 skel::animation_sampler_linear<vec::fvec4>>(
                                 channel.sampler);
-                        vec::fvec4 value = sampler[params];
-                        accumulate_rotation(bone_index, value, weight);
+                        accumulate_rotation(bone_index,
+                                            sampler[params],
+                                            weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_cubicspline<
@@ -564,8 +569,9 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler =
                                 std::get<skel::animation_sampler_cubicspline<
                                     vec::fvec4>>(channel.sampler);
-                        vec::fvec4 value = sampler[params];
-                        accumulate_rotation(bone_index, value, weight);
+                        accumulate_rotation(bone_index,
+                                            sampler[params],
+                                            weight);
                     }
                     else
                     {
@@ -584,8 +590,7 @@ void skel::result::accumulate(const std::string &root_name,
                             vec::fvec3> &sampler =
                             std::get<skel::animation_sampler_step<vec::fvec3>>(
                                 channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_scale(bone_index, value, weight);
+                        accumulate_scale(bone_index, sampler[params], weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_linear<vec::fvec3>>(
@@ -596,8 +601,7 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler = std::get<
                                 skel::animation_sampler_linear<vec::fvec3>>(
                                 channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_scale(bone_index, value, weight);
+                        accumulate_scale(bone_index, sampler[params], weight);
                     }
                     else if (std::holds_alternative<
                                  skel::animation_sampler_cubicspline<
@@ -607,8 +611,7 @@ void skel::result::accumulate(const std::string &root_name,
                             &sampler =
                                 std::get<skel::animation_sampler_cubicspline<
                                     vec::fvec3>>(channel.sampler);
-                        vec::fvec3 value = sampler[params];
-                        accumulate_scale(bone_index, value, weight);
+                        accumulate_scale(bone_index, sampler[params], weight);
                     }
                     else
                     {
