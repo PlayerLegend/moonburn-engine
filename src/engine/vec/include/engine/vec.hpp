@@ -124,7 +124,11 @@ template <typename T> class mat4
     std::array<T, 16> indices;
 
   public:
-    mat4() {};
+    mat4()
+    {
+        for (int i = 0; i < 16; i++)
+            indices[i] = (i % 5 == 0) ? (T)1 : (T)0;
+    };
     using column = std::array<T, 4>;
     mat4(const column &c0, const column &c1, const column &c2, const column &c3)
         : indices({c0[0],
@@ -166,6 +170,18 @@ class transform3
                fvec4 _rotation = fvec4(0, 0, 0, 1),
                fvec3 _scale = fvec3(1, 1, 1))
         : translation(_translation), rotation(_rotation), scale(_scale)
+    {
+    }
+};
+
+template <typename T> class cubicspline
+{
+  public:
+    T in_tangent;
+    T value;
+    T out_tangent;
+    cubicspline(T _in_tangent, T _value, T _out_tangent)
+        : in_tangent(_in_tangent), value(_value), out_tangent(_out_tangent)
     {
     }
 };
