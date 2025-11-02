@@ -138,3 +138,52 @@ vec::fvec4 vec::slerp(const fvec4 &a, const fvec4 &b, float t)
     }
 }
 
+vec::fmat4_translation::fmat4_translation(const fvec3 &translation)
+    : fmat4(fmat4::column{1, 0, 0, 0},
+            fmat4::column{0, 1, 0, 0},
+            fmat4::column{0, 0, 1, 0},
+            fmat4::column{translation.x, translation.y, translation.z, 1})
+{
+}
+
+vec::fmat4_rotation::fmat4_rotation(const fvec4 &quaternion)
+    : fmat4_rotation(2.0f / vec::dot(quaternion, quaternion), quaternion)
+{
+}
+
+vec::fmat4_rotation::fmat4_rotation(fscalar s, const fvec4 &rotation)
+    : fmat4(
+          vec::fmat4::column{
+              1 - s * (rotation.y * rotation.y + rotation.z * rotation.z),
+              s * (rotation.x * rotation.y + rotation.z * rotation.w),
+              s * (rotation.x * rotation.z - rotation.y * rotation.w),
+              0,
+          },
+          vec::fmat4::column{
+              s * (rotation.x * rotation.y - rotation.z * rotation.w),
+              1 - s * (rotation.x * rotation.x + rotation.z * rotation.z),
+              s * (rotation.y * rotation.z + rotation.x * rotation.w),
+              0,
+          },
+          vec::fmat4::column{
+              s * (rotation.x * rotation.z + rotation.y * rotation.w),
+              s * (rotation.y * rotation.z - rotation.x * rotation.w),
+              1 - s * (rotation.x * rotation.x + rotation.y * rotation.y),
+              0,
+          },
+          vec::fmat4::column{
+              0,
+              0,
+              0,
+              1,
+          })
+{
+}
+
+vec::fmat4_scale::fmat4_scale(const fvec3 &scale)
+    : fmat4(fmat4::column{scale.x, 0, 0, 0},
+            fmat4::column{0, scale.y, 0, 0},
+            fmat4::column{0, 0, scale.z, 0},
+            fmat4::column{0, 0, 0, 1})
+{
+}

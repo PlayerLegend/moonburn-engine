@@ -198,5 +198,23 @@ fvec4 normal(const fvec4 &v);
 fscalar dot(const fvec4 &a, const fvec4 &b);
 fvec4 slerp(const fvec4 &a, const fvec4 &b, float t);
 
+class fmat4_translation : public fmat4
+{
+  public:
+    fmat4_translation(const fvec3 &translation);
+};
+
+class fmat4_rotation : public fmat4
+{
+    fmat4_rotation(fscalar s, const fvec4 & quaternion);
+  public:
+    fmat4_rotation(const fvec4 &quaternion);
+};
+
+class fmat4_scale : public fmat4
+{
+  public:
+    fmat4_scale(const fvec3 &scale);
+};
 
 }; // namespace vec
