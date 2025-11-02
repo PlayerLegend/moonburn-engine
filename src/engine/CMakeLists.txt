@@ -59,6 +59,8 @@ endif()
 
 target_include_directories(engine PUBLIC include)
 
+target_link_libraries(engine PRIVATE glad)
+
 # ===
 # Testing
 
@@ -71,4 +73,5 @@ add_subdirectory(vec)
 add_subdirectory(gltf)
 add_subdirectory(filesystem)
 add_subdirectory(gpu)
+add_subdirectory(skel)
 # add_subdirectory(bsp/test/viewer)
