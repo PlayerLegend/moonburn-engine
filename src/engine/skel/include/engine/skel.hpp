@@ -22,138 +22,57 @@ using animation_sampler_output =
 
 // using animation_sampler_input = std::vector<float>;
 
-class animation_sampler_input
+class interpolation_params
 {
   public:
-    class frame_params
-    {
-      public:
-        float tc;
-        float td;
-        float t;
-        float t_inv;
+    float tc;
+    float td;
+    float t;
+    float t_inv;
 
-        float t_before;
-        float t_after;
+    float t_before;
+    float t_after;
 
-        size_t i_before;
+    size_t i_before;
 
-        // Hermite basis (blending) functions
-        float h00;
-        float h10;
-        float h01;
-        float h11;
+    // Hermite basis (blending) functions
+    float h00;
+    float h10;
+    float h01;
+    float h11;
 
-        bool clamp;
+    bool clamp;
 
-        const std::vector<float> &times;
-        frame_params(const std::vector<float> &times) : times(times) {}
+    const std::vector<float> &times;
 
-        void update(float time);
-    };
-
-  private:
-    std::vector<float> times;
-    frame_params cache;
-
-  public:
-    animation_sampler_input(const gltf::accessor &accessor) : cache(times)
-    {
-        times = accessor;
-    }
-    float operator[](size_t index) const
-    {
-        return times[index];
-    }
-    size_t size() const
-    {
-        return times.size();
-    }
-    const float *data() const
-    {
-        return times.data();
-    }
-    const frame_params &get_frame_params(float time)
-    {
-        cache.update(time);
-        return cache;
-    }
+    interpolation_params(const std::vector<float> &_times, float time);
 };
-
-class animation_sampler_input_hash
-{
-  public:
-    size_t operator()(const animation_sampler_input &input) const
-    {
-        // sdbm
-        std::size_t hash = 0;
-        uint8_t *i = (uint8_t *)input.data();
-        uint8_t *end = i + input.size() * sizeof(input[0]);
-
-        while (i < end)
-        {
-            hash = (*i++) + (hash << 6) + (hash << 16) - hash;
-        }
-        return hash;
-    }
-};
-
-class animation_sampler_input_equal
-{
-  public:
-    bool operator()(const animation_sampler_input &a,
-                    const animation_sampler_input &b) const
-    {
-        if (a.size() != b.size())
-            return false;
-
-        for (size_t i = 0; i < a.size(); i++)
-        {
-            if (std::abs(a[i] - b[i]) > vec::epsilon)
-                return false;
-        }
-
-        return true;
-    }
-};
-
-using animation_sampler_input_unordered_set =
-    std::unordered_set<animation_sampler_input,
-                       animation_sampler_input_hash,
-                       animation_sampler_input_equal>;
 
 template <typename T> class animation_sampler_step
 {
-    animation_sampler_input &input;
     const std::vector<T> &output;
 
   public:
-    animation_sampler_step(animation_sampler_input_unordered_set &all_inputs,
-                           const gltf::animation_sampler &gltf_sampler);
-    T operator[](float);
+    animation_sampler_step(const gltf::animation_sampler &gltf_sampler);
+    T operator[](const interpolation_params &) const;
 };
 
 template <typename T> class animation_sampler_linear
 {
-    animation_sampler_input &input;
     const std::vector<T> &output;
 
   public:
-    animation_sampler_linear(animation_sampler_input_unordered_set &all_inputs,
-                             const gltf::animation_sampler &gltf_sampler);
-    T operator[](float);
+    animation_sampler_linear(const gltf::animation_sampler &gltf_sampler);
+    T operator[](const interpolation_params &) const;
 };
 
 template <typename T> class animation_sampler_cubicspline
 {
-    animation_sampler_input &input;
     const std::vector<vec::cubicspline<T>> &output;
 
   public:
-    animation_sampler_cubicspline(
-        animation_sampler_input_unordered_set &all_inputs,
-        const gltf::animation_sampler &gltf_sampler);
-    T operator[](float);
+    animation_sampler_cubicspline(const gltf::animation_sampler &gltf_sampler);
+    T operator[](const interpolation_params &) const;
 };
 
 using animation_sampler =
@@ -186,15 +105,24 @@ class animation_channel
     }
 };
 
-using animation_bone = std::vector<animation_channel>;
-
-// using animation = std::unordered_map<std::string, animation_bone>;
-class animation
+class animation_times
 {
   public:
-    animation_sampler_input_unordered_set all_inputs;
-    std::unordered_map<std::string, animation_bone> bones;
+    std::vector<float> input;
+    std::unordered_map<std::string, std::vector<animation_channel>> bones;
+    animation_times(const gltf::accessor &input_accessor);
+};
+
+class animation
+{
     std::vector<animation_sampler> samplers;
+
+    void add_channel(size_t input_index,
+                     const gltf::animation &input_animation,
+                     const gltf::animation_channel &input_channel);
+
+  public:
+    std::vector<animation_times> times;
     animation(const gltf::animation &gltf_animation, const gltf::gltf &gltf);
 };
 

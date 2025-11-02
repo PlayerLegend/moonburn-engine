@@ -73,17 +73,120 @@ skel::armature::armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf)
     root_name = find_skin_root_name(gltf_skin);
 }
 
-bool input_times_compar(std::vector<float> &a, std::vector<float> &b)
+skel::animation_times::animation_times(const gltf::accessor &input_accessor)
+    : input(input_accessor)
 {
-    if (a.size() != b.size())
-        return false;
-    for (size_t i = 0, size = a.size(); i < size; i++)
-    {
-        if (std::abs(a[i] - b[i]) > vec::epsilon)
-            return false;
-    }
-    return true;
 }
+
+void skel::animation::add_channel(size_t input_index,
+                                  const gltf::animation &input_animation,
+                                  const gltf::animation_channel &input_channel)
+{
+    if (!input_channel.target.node)
+        return;
+
+    // skel::animation_bone &bone =
+    //     animation.bones[input_channel.target.node->name];
+
+    skel::animation_sampler &sampler =
+        samplers.at(input_animation.get_sampler_index(input_channel.sampler));
+
+    animation_times &time = times.at(input_index);
+
+    std::vector<skel::animation_channel> &bone_channels =
+        time.bones[input_channel.target.node->name];
+
+    bone_channels.emplace_back(
+        skel::animation_channel(input_channel.target.path, sampler));
+}
+
+skel::animation::animation(const gltf::animation &gltf_animation,
+                           const gltf::gltf &gltf)
+{
+    std::unordered_map<const gltf::accessor *, size_t> accessor_to_input_index;
+
+    for (const gltf::animation_sampler &gltf_sampler : gltf_animation.samplers)
+    {
+        auto it =
+            accessor_to_input_index.emplace(&gltf_sampler.input,
+                                            accessor_to_input_index.size());
+
+        if (!it.second)
+            continue;
+
+        times.emplace_back(gltf_sampler.input);
+    }
+
+    samplers.reserve(gltf_animation.samplers.size());
+
+    for (const gltf::animation_sampler &gltf_sampler : gltf_animation.samplers)
+    {
+        if (gltf_sampler.interpolation ==
+            gltf::animation_sampler_interpolation::STEP)
+        {
+            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
+                samplers.push_back(
+                    skel::animation_sampler_step<vec::fvec3>(gltf_sampler));
+            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
+                samplers.push_back(
+                    skel::animation_sampler_step<vec::fvec4>(gltf_sampler));
+            else
+                throw skel::exception(
+                    "Unsupported accessor type for animation sampler output");
+        }
+        else if (gltf_sampler.interpolation ==
+                 gltf::animation_sampler_interpolation::LINEAR)
+        {
+            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
+                samplers.push_back(
+                    skel::animation_sampler_linear<vec::fvec3>(gltf_sampler));
+            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
+                samplers.push_back(
+                    skel::animation_sampler_linear<vec::fvec4>(gltf_sampler));
+            else
+                throw skel::exception(
+                    "Unsupported accessor type for animation sampler output");
+        }
+        else if (gltf_sampler.interpolation ==
+                 gltf::animation_sampler_interpolation::CUBICSPLINE)
+        {
+            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
+                samplers.push_back(
+                    skel::animation_sampler_cubicspline<vec::fvec3>(
+                        gltf_sampler));
+            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
+                samplers.push_back(
+                    skel::animation_sampler_cubicspline<vec::fvec4>(
+                        gltf_sampler));
+            else
+                throw skel::exception(
+                    "Unsupported accessor type for animation sampler output");
+        }
+        else
+        {
+            throw skel::exception("Unsupported interpolation type");
+        }
+    }
+
+    for (const gltf::animation_channel &gltf_channel : gltf_animation.channels)
+    {
+        add_channel(accessor_to_input_index.at(&gltf_channel.sampler.input),
+                    gltf_animation,
+                    gltf_channel);
+    }
+}
+
+// bool input_times_compar(std::vector<float> &a, std::vector<float> &b)
+// {
+//     if (a.size() != b.size())
+//         return false;
+//     for (size_t i = 0, size = a.size(); i < size; i++)
+//     {
+//         if (std::abs(a[i] - b[i]) > vec::epsilon)
+//             return false;
+//     }
+//     return true;
+// }
 
 static size_t frame_find(const std::vector<float> &times, float time)
 {
@@ -122,10 +225,8 @@ static size_t frame_find(const std::vector<float> &times, float time)
 
 template <typename T>
 skel::animation_sampler_step<T>::animation_sampler_step(
-    animation_sampler_input_unordered_set &all_inputs,
     const gltf::animation_sampler &gltf_sampler)
-    : input(*all_inputs.emplace(gltf_sampler.input).first),
-      output(gltf_sampler.output)
+    : output(gltf_sampler.output)
 {
 }
 
@@ -138,19 +239,29 @@ skel::animation_sampler_step<T>::animation_sampler_step(
 
 template <typename T>
 skel::animation_sampler_linear<T>::animation_sampler_linear(
-    animation_sampler_input_unordered_set &all_inputs,
     const gltf::animation_sampler &gltf_sampler)
-    : input(*all_inputs.emplace(gltf_sampler.input).first),
-      output(gltf_sampler.output)
+    : output(gltf_sampler.output)
 {
 }
 
 template <>
-vec::fvec3 skel::animation_sampler_linear<vec::fvec3>::operator[](float time)
+vec::fvec3 skel::animation_sampler_step<vec::vec3<float>>::operator[](
+    const interpolation_params &params) const
 {
-    const animation_sampler_input::frame_params &params =
-        input.get_frame_params(time);
+    return output[params.i_before];
+}
 
+template <>
+vec::fvec4 skel::animation_sampler_step<vec::fvec4>::operator[](
+    const interpolation_params &params) const
+{
+    return output[params.i_before];
+}
+
+template <>
+vec::fvec3 skel::animation_sampler_linear<vec::fvec3>::operator[](
+    const interpolation_params &params) const
+{
     if (params.clamp)
     {
         return output.back();
@@ -158,41 +269,34 @@ vec::fvec3 skel::animation_sampler_linear<vec::fvec3>::operator[](float time)
 
     const vec::fvec3 &v0 = output[params.i_before];
     const vec::fvec3 &v1 = output[params.i_before + 1];
+
     return v0 * params.t_inv + v1 * params.t;
 }
-
 template <>
-vec::fvec4 skel::animation_sampler_linear<vec::fvec4>::operator[](float time)
+vec::fvec4 skel::animation_sampler_linear<vec::fvec4>::operator[](
+    const interpolation_params &params) const
 {
-    const animation_sampler_input::frame_params &params =
-        input.get_frame_params(time);
-
     if (params.clamp)
     {
         return output.back();
     }
-
     const vec::fvec4 &v0 = output[params.i_before];
     const vec::fvec4 &v1 = output[params.i_before + 1];
+
     return vec::slerp(v0, v1, params.t);
 }
 
 template <typename T>
 skel::animation_sampler_cubicspline<T>::animation_sampler_cubicspline(
-    animation_sampler_input_unordered_set &all_inputs,
     const gltf::animation_sampler &gltf_sampler)
-    : input(*all_inputs.emplace(gltf_sampler.input).first),
-      output(gltf_sampler.output)
+    : output(gltf_sampler.output)
 {
 }
 
 template <>
-vec::fvec3
-skel::animation_sampler_cubicspline<vec::fvec3>::operator[](float time)
+vec::fvec3 skel::animation_sampler_cubicspline<vec::fvec3>::operator[](
+    const interpolation_params &params) const
 {
-    const animation_sampler_input::frame_params &params =
-        input.get_frame_params(time);
-
     if (params.clamp)
     {
         return output.back().value;
@@ -206,12 +310,9 @@ skel::animation_sampler_cubicspline<vec::fvec3>::operator[](float time)
 }
 
 template <>
-vec::fvec4
-skel::animation_sampler_cubicspline<vec::fvec4>::operator[](float time)
+vec::fvec4 skel::animation_sampler_cubicspline<vec::fvec4>::operator[](
+    const interpolation_params &params) const
 {
-    const animation_sampler_input::frame_params &params =
-        input.get_frame_params(time);
-
     if (params.clamp)
     {
         return output.back().value;
@@ -224,11 +325,11 @@ skel::animation_sampler_cubicspline<vec::fvec4>::operator[](float time)
            s1.value * params.h01 + s1.in_tangent * params.h11;
 }
 
-void skel::animation_sampler_input::frame_params::update(float time)
+skel::interpolation_params::interpolation_params(
+    const std::vector<float> &_times,
+    float time)
+    : times(_times)
 {
-    if (std::fabs(tc - time) < vec::epsilon)
-        return;
-
     tc = time;
 
     i_before = frame_find(times, time);
@@ -251,87 +352,6 @@ void skel::animation_sampler_input::frame_params::update(float time)
     h10 = t * t * t - 2 * t * t + t;
     h01 = -2 * t * t * t + 3 * t * t;
     h11 = t * t * t - t * t;
-}
-
-static void animation_add_channel(skel::animation &animation,
-                                  const gltf::animation &input_animation,
-                                  const gltf::animation_channel &input_channel)
-{
-    if (!input_channel.target.node)
-        return;
-
-    skel::animation_bone &bone =
-        animation.bones[input_channel.target.node->name];
-    skel::animation_sampler &sampler = animation.samplers.at(
-        input_animation.get_sampler_index(input_channel.sampler));
-
-    bone.push_back(skel::animation_channel(input_channel.target.path, sampler));
-}
-
-skel::animation::animation(const gltf::animation &gltf_animation,
-                           const gltf::gltf &gltf)
-{
-    samplers.reserve(gltf_animation.samplers.size());
-
-    for (const gltf::animation_sampler &gltf_sampler : gltf_animation.samplers)
-    {
-        if (gltf_sampler.interpolation ==
-            gltf::animation_sampler_interpolation::STEP)
-        {
-            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
-                samplers.push_back(
-                    skel::animation_sampler_step<vec::fvec3>(all_inputs,
-                                                             gltf_sampler));
-            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
-                samplers.push_back(
-                    skel::animation_sampler_step<vec::fvec4>(all_inputs,
-                                                             gltf_sampler));
-            else
-                throw skel::exception(
-                    "Unsupported accessor type for animation sampler output");
-        }
-        else if (gltf_sampler.interpolation ==
-                 gltf::animation_sampler_interpolation::LINEAR)
-        {
-            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
-                samplers.push_back(
-                    skel::animation_sampler_linear<vec::fvec3>(all_inputs,
-                                                               gltf_sampler));
-            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
-                samplers.push_back(
-                    skel::animation_sampler_linear<vec::fvec4>(all_inputs,
-                                                               gltf_sampler));
-            else
-                throw skel::exception(
-                    "Unsupported accessor type for animation sampler output");
-        }
-        else if (gltf_sampler.interpolation ==
-                 gltf::animation_sampler_interpolation::CUBICSPLINE)
-        {
-            if (gltf_sampler.output.type == gltf::attribute_type::VEC3)
-                samplers.push_back(
-                    skel::animation_sampler_cubicspline<vec::fvec3>(
-                        all_inputs,
-                        gltf_sampler));
-            else if (gltf_sampler.output.type == gltf::attribute_type::VEC4)
-                samplers.push_back(
-                    skel::animation_sampler_cubicspline<vec::fvec4>(
-                        all_inputs,
-                        gltf_sampler));
-            else
-                throw skel::exception(
-                    "Unsupported accessor type for animation sampler output");
-        }
-        else
-        {
-            throw skel::exception("Unsupported interpolation type");
-        }
-    }
-
-    for (const gltf::animation_channel &gltf_channel : gltf_animation.channels)
-    {
-        animation_add_channel(*this, gltf_animation, gltf_channel);
-    }
 }
 
 skel::result::result(const skel::armature &_armature) : armature(_armature)
@@ -435,59 +455,185 @@ skel::result::operator std::vector<vec::fmat4> &()
     return output;
 }
 
-void skel::result::accumulate(const std::string &root_name,
-                              const skel::animation &animation,
-                              float time,
-                              float weight)
+std::vector<skel::bone_index> get_bone_hierarchy(const skel::armature &armature,
+                                                 skel::bone_index root_bone)
 {
+    std::vector<skel::bone_index> bone_hierarchy;
     std::stack<skel::bone_index> bone_stack;
 
-    bone_stack.push(armature.bones_names.at(root_name));
+    bone_stack.push(root_bone);
 
     while (!bone_stack.empty())
     {
         skel::bone_index bone_index = bone_stack.top();
         bone_stack.pop();
 
+        bone_hierarchy.push_back(bone_index);
+
         const skel::armature_bone &bone = armature.bones.at(bone_index);
 
-        auto bone_it =
-            animation.bones.find(armature.bones_names.begin()->first);
-        if (bone_it == animation.bones.end())
-            continue;
-        const skel::animation_bone &animation_bone = bone_it->second;
-        for (const skel::animation_channel &channel : animation_bone)
-        {
-            if (channel.path == gltf::animation_channel_path::TRANSLATION)
-            {
-                accumulate_translation(
-                    bone_index,
-                    std::get<skel::animation_sampler_step<vec::fvec3>>(
-                        channel.sampler)[time],
-                    weight);
-            }
-            else if (channel.path == gltf::animation_channel_path::ROTATION)
-            {
-                accumulate_rotation(
-                    bone_index,
-                    std::get<skel::animation_sampler_step<vec::fvec4>>(
-                        channel.sampler)[time],
-                    weight);
-            }
-            else if (channel.path == gltf::animation_channel_path::SCALE)
-            {
-                accumulate_scale(
-                    bone_index,
-                    std::get<skel::animation_sampler_step<vec::fvec3>>(
-                        channel.sampler)[time],
-                    weight);
-            }
-        }
-
         if (bone.child != skel::max_bones)
-
             bone_stack.push(bone.child);
         if (bone.peer != skel::max_bones)
             bone_stack.push(bone.peer);
+    }
+
+    return bone_hierarchy;
+}
+
+void skel::result::accumulate(const std::string &root_name,
+                              const skel::animation &animation,
+                              float time,
+                              float weight)
+{
+    std::vector<skel::bone_index> bone_hierarchy =
+        get_bone_hierarchy(armature, armature.bones_names.at(root_name));
+
+    for (const skel::animation_times &time_data : animation.times)
+    {
+        skel::interpolation_params params(time_data.input, time);
+
+        for (const skel::bone_index &bone_index : bone_hierarchy)
+        {
+            const skel::armature_bone &bone = armature.bones[bone_index];
+
+            auto bone_it = time_data.bones.find(bone.name);
+
+            if (bone_it == time_data.bones.end())
+                continue;
+
+            const std::vector<skel::animation_channel> &channels =
+                bone_it->second;
+
+            for (const skel::animation_channel &channel : channels)
+            {
+                if (channel.path == gltf::animation_channel_path::TRANSLATION)
+                {
+                    if (std::holds_alternative<
+                            skel::animation_sampler_step<vec::fvec3>>(
+                            channel.sampler))
+                    {
+                        const skel::animation_sampler_step<
+                            vec::fvec3> &sampler =
+                            std::get<skel::animation_sampler_step<vec::fvec3>>(
+                                channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_translation(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_linear<vec::fvec3>>(
+                                 channel.sampler))
+                    {
+                        const skel::animation_sampler_linear<vec::fvec3>
+                            &sampler = std::get<
+                                skel::animation_sampler_linear<vec::fvec3>>(
+                                channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_translation(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_cubicspline<
+                                     vec::fvec3>>(channel.sampler))
+                    {
+                        const skel::animation_sampler_cubicspline<vec::fvec3>
+                            &sampler =
+                                std::get<skel::animation_sampler_cubicspline<
+                                    vec::fvec3>>(channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_translation(bone_index, value, weight);
+                    }
+                    else
+                    {
+                        throw skel::exception(
+                            "Unsupported animation sampler type for "
+                            "translation");
+                    }
+                }
+                else if (channel.path == gltf::animation_channel_path::ROTATION)
+                {
+                    if (std::holds_alternative<
+                            skel::animation_sampler_step<vec::fvec4>>(
+                            channel.sampler))
+                    {
+                        const skel::animation_sampler_step<vec::fvec4>
+                            &sampler = std::get<skel::animation_sampler_step<
+
+                                vec::fvec4>>(channel.sampler);
+                        vec::fvec4 value = sampler[params];
+                        accumulate_rotation(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_linear<vec::fvec4>>(
+                                 channel.sampler))
+                    {
+                        const skel::animation_sampler_linear<vec::fvec4>
+                            &sampler = std::get<
+                                skel::animation_sampler_linear<vec::fvec4>>(
+                                channel.sampler);
+                        vec::fvec4 value = sampler[params];
+                        accumulate_rotation(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_cubicspline<
+                                     vec::fvec4>>(channel.sampler))
+                    {
+                        const skel::animation_sampler_cubicspline<vec::fvec4>
+                            &sampler =
+                                std::get<skel::animation_sampler_cubicspline<
+                                    vec::fvec4>>(channel.sampler);
+                        vec::fvec4 value = sampler[params];
+                        accumulate_rotation(bone_index, value, weight);
+                    }
+                    else
+                    {
+                        throw skel::exception(
+                            "Unsupported animation sampler type for "
+                            "rotation");
+                    }
+                }
+                else if (channel.path == gltf::animation_channel_path::SCALE)
+                {
+                    if (std::holds_alternative<
+                            skel::animation_sampler_step<vec::fvec3>>(
+                            channel.sampler))
+                    {
+                        const skel::animation_sampler_step<
+                            vec::fvec3> &sampler =
+                            std::get<skel::animation_sampler_step<vec::fvec3>>(
+                                channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_scale(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_linear<vec::fvec3>>(
+
+                                 channel.sampler))
+                    {
+                        const skel::animation_sampler_linear<vec::fvec3>
+                            &sampler = std::get<
+                                skel::animation_sampler_linear<vec::fvec3>>(
+                                channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_scale(bone_index, value, weight);
+                    }
+                    else if (std::holds_alternative<
+                                 skel::animation_sampler_cubicspline<
+                                     vec::fvec3>>(channel.sampler))
+                    {
+                        const skel::animation_sampler_cubicspline<vec::fvec3>
+                            &sampler =
+                                std::get<skel::animation_sampler_cubicspline<
+                                    vec::fvec3>>(channel.sampler);
+                        vec::fvec3 value = sampler[params];
+                        accumulate_scale(bone_index, value, weight);
+                    }
+                    else
+                    {
+                        throw skel::exception(
+                            "Unsupported animation sampler type for scale");
+                    }
+                }
+            }
+        }
     }
 }
