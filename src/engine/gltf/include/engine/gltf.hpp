@@ -405,7 +405,6 @@ class animation_channel
   public:
     const animation_channel_target target;
     const animation_sampler &sampler;
-    std::string name;
     animation_channel(const json::object &root,
                       const gltf &gltf,
                       const std::vector<animation_sampler> &samplers);

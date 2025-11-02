@@ -692,8 +692,7 @@ parse_animation_channel_path(const std::string &name)
     const gltf &gltf,
     const std::vector<animation_sampler> &samplers)
     : target(animation_channel_target(root.at("target"), gltf)),
-      sampler(samplers.at(root.at("sampler").strict_int())),
-      name(get_string(root, "name"))
+      sampler(samplers.at(root.at("sampler").strict_int()))
 {
 }
 
