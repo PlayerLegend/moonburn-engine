@@ -455,6 +455,7 @@ class gltf
     std::vector<node> nodes;
     std::vector<skin> skins;
     std::vector<scene> scenes;
+    std::vector<animation> animations;
 
   public:
     const ::gltf::asset &get_asset() const
@@ -527,6 +528,13 @@ class gltf
         if (index >= scenes.size())
             throw ::gltf::exception::parse_error("Scene index out of range");
         return scenes[index];
+    }
+    const ::gltf::animation &get_animation(size_t index) const
+    {
+        if (index >= animations.size())
+            throw ::gltf::exception::parse_error(
+                "Animation index out of range");
+        return animations[index];
     }
 
     gltf(const std::string &_path,

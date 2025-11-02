@@ -762,6 +762,7 @@ parse_animation_channel_path(const std::string &name)
     const json::array *_nodes = get_optional_array(root, "nodes");
     const json::array *_skins = get_optional_array(root, "skins");
     const json::array *_scenes = get_optional_array(root, "scenes");
+    const json::array *_animations = get_optional_array(root, "animations");
 
     if (_buffers)
         buffers.reserve(_buffers->size());
@@ -785,6 +786,8 @@ parse_animation_channel_path(const std::string &name)
         skins.reserve(_skins->size());
     if (_scenes)
         scenes.reserve(_scenes->size());
+    if (_animations)
+        animations.reserve(_animations->size());
 
     if (_buffers)
         for (const json::object &buffer : *_buffers)
@@ -829,6 +832,10 @@ parse_animation_channel_path(const std::string &name)
     if (_scenes)
         for (const json::object &scene : *_scenes)
             scenes.push_back(::gltf::scene(scene, *this));
+
+    if (_animations)
+        for (const json::object &animation : *_animations)
+            animations.push_back(::gltf::animation(animation, *this));
 }
 
 float gltf::accessor::get_component_as_float(size_t attribute_index,
