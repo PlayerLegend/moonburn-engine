@@ -79,6 +79,8 @@ enum id : uint8_t
     MOUSE6,
     MOUSE7,
     MOUSE8,
+    MOUSEWHEEL_UP,
+    MOUSEWHEEL_DOWN,
     ESCAPE,
     SPACE,
     F1,

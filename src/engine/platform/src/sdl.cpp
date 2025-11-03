@@ -270,6 +270,21 @@ static void mouse_button_event(platform::frame::state &frame,
     }
 }
 
+static void mouse_wheel_event(platform::frame::state &frame,
+                              SDL_MouseWheelEvent event)
+{
+    if (event.y > 0)
+    {
+        frame.button_press(platform::button::MOUSEWHEEL_UP);
+        frame.button_release(platform::button::MOUSEWHEEL_UP);
+    }
+    else if (event.y < 0)
+    {
+        frame.button_press(platform::button::MOUSEWHEEL_DOWN);
+        frame.button_release(platform::button::MOUSEWHEEL_DOWN);
+    }
+}
+
 platform::frame::state platform::window::get_frame()
 {
     platform::frame::state &frame = handler->frame;
@@ -307,6 +322,9 @@ platform::frame::state platform::window::get_frame()
             break;
         case SDL_WINDOWEVENT:
             window_event(frame, sdl_event.window);
+            break;
+        case SDL_MOUSEWHEEL:
+            mouse_wheel_event(frame, sdl_event.wheel);
             break;
         }
     }
