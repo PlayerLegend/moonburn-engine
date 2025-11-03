@@ -62,3 +62,22 @@ class base : public engine::exception
     base(const std::string &message) : engine::exception(message) {}
 };
 } // namespace engine::gpu::exception
+
+
+namespace engine::gpu::shader
+{
+
+class geometry
+{
+  public:
+    uint32_t program = 0;
+
+    geometry();
+    ~geometry();
+
+    void bind();
+    void set_skin(const std::vector<vec::fmat4> &matrices);
+    void set_transform(const vec::fmat4 &matrix);
+};
+
+} // namespace engine::gpu::shader
