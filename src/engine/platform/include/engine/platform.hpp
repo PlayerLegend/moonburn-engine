@@ -107,6 +107,9 @@ enum state : uint8_t
 
     // INVALID = 1 << 7,
 };
+
+std::string id_from_string(id id);
+
 } // namespace platform::button
 
 namespace platform::event
