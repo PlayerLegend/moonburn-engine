@@ -36,6 +36,22 @@ class primitive
     void draw();
     void bind();
 };
+
+class gbuffer
+{
+  public:
+    uint32_t fbo = 0;
+    uint32_t position = 0;
+    uint32_t normal = 0;
+    uint32_t albedo = 0;
+    uint32_t depth = 0;
+
+    gbuffer(uint32_t width, uint32_t height);
+    ~gbuffer();
+
+    void bind();
+};
+
 } // namespace engine::gpu
 
 namespace engine::gpu::exception
