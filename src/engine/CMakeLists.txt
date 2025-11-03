@@ -1,9 +1,9 @@
 add_library(engine)
 
-# message("SDL2 = ${sdl2}")
-
 find_library(glfw glfw)
 find_library(sdl2 SDL2)
+
+# message("SDL2 = ${sdl2}")
 
 # if (glfw)
 #   message("Using glfw")
@@ -60,6 +60,7 @@ endif()
 target_include_directories(engine PUBLIC include)
 
 target_link_libraries(engine PRIVATE glad)
+target_link_libraries(engine PRIVATE ${sdl2})
 
 # ===
 # Testing
@@ -74,4 +75,5 @@ add_subdirectory(gltf)
 add_subdirectory(filesystem)
 add_subdirectory(gpu)
 add_subdirectory(skel)
+add_subdirectory(platform)
 # add_subdirectory(bsp/test/viewer)
