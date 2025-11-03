@@ -58,6 +58,16 @@ void state::button_release(enum platform::button::id id)
     edge_list.push_back(id);
 }
 
+void state::window_resize(const vec::vec2<unsigned int> &dimensions)
+{
+    window.dimensions = dimensions;
+    window.aspect_ratio =
+        static_cast<float>(dimensions.x) / static_cast<float>(dimensions.y);
+
+    events.emplace_back(
+        platform::event::window_resize{window.aspect_ratio, dimensions});
+}
+
 void state::clear_edge()
 {
     for (enum platform::button::id id : edge_list)
