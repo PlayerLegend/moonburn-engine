@@ -213,6 +213,11 @@ platform::window::~window() = default;
 
 static void button_event(platform::frame::state &frame, SDL_KeyboardEvent event)
 {
+    if (event.repeat)
+    {
+        return;
+    }
+
     enum platform::button::id id =
         platform::button::id_from_sdl_scancode(event.keysym.scancode);
 
