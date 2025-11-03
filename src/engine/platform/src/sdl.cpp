@@ -46,11 +46,12 @@ class window
                             SDL_GL_CONTEXT_PROFILE_CORE);
 
         sdl_window = SDL_CreateWindow(title.c_str(),
-                                      0,
-                                      0,
+                                      SDL_WINDOWPOS_UNDEFINED,
+                                      SDL_WINDOWPOS_UNDEFINED,
                                       800,
                                       600,
-                                      SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+                                      SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
+                                          SDL_WINDOW_RESIZABLE);
 
         if (!sdl_window)
         {
