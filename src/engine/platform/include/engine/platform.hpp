@@ -1,8 +1,8 @@
 #include <engine/vec.hpp>
 #include <memory>
+#include <string>
 #include <variant>
 #include <vector>
-#include <string>
 
 namespace platform::button
 {
