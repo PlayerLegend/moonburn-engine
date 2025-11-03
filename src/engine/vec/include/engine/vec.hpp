@@ -111,6 +111,7 @@ template <typename T> class vec4
     vec3<T> operator*(const vec3<T> &rhs) const;
 };
 
+using fvec2 = vec2<float>;
 using fvec3 = vec3<float>;
 using fvec4 = vec4<float>;
 
@@ -206,7 +207,8 @@ class fmat4_translation : public fmat4
 
 class fmat4_rotation : public fmat4
 {
-    fmat4_rotation(fscalar s, const fvec4 & quaternion);
+    fmat4_rotation(fscalar s, const fvec4 &quaternion);
+
   public:
     fmat4_rotation(const fvec4 &quaternion);
 };
