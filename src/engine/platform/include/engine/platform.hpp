@@ -129,7 +129,13 @@ struct button
     enum platform::button::state state;
 };
 
-using variant = std::variant<pointer, analog, button>;
+struct window_resize
+{
+    float aspect_ratio;
+    vec::vec2<unsigned int> dimensions;
+};
+
+using variant = std::variant<pointer, analog, button, window_resize>;
 
 } // namespace platform::event
 

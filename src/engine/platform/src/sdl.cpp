@@ -245,6 +245,12 @@ static void window_event(platform::frame::state &frame, SDL_WindowEvent event)
     {
         frame.should_close = true;
     }
+    else if (event.event == SDL_WINDOWEVENT_RESIZED)
+    {
+        frame.window_resize(
+            vec::vec2<unsigned int>{static_cast<unsigned int>(event.data1),
+                                    static_cast<unsigned int>(event.data2)});
+    }
 }
 
 static void mouse_button_event(platform::frame::state &frame,
