@@ -183,6 +183,7 @@ class state
     void mouse_delta(const vec::fvec2 &delta);
     void button_press(enum platform::button::id id);
     void button_release(enum platform::button::id id);
+    void window_resize(const vec::vec2<unsigned int> &dimensions);
     void clear_edge();
     void clear();
     state() : buttons(platform::button::MAX, 0) {}
