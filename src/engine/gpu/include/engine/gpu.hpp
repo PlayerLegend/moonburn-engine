@@ -39,13 +39,13 @@ class primitive
 
 class gbuffer
 {
-  public:
     uint32_t fbo = 0;
     uint32_t position = 0;
     uint32_t normal = 0;
     uint32_t albedo = 0;
     uint32_t depth = 0;
 
+  public:
     gbuffer(uint32_t width, uint32_t height);
     ~gbuffer();
 
