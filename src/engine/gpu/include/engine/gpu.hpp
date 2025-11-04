@@ -1,6 +1,10 @@
+#pragma once
+
 #include <engine/exception.hpp>
+#include <engine/image.hpp>
 #include <engine/vec.hpp>
 #include <stdint.h>
+#include <vector>
 
 namespace gltf
 {
@@ -37,6 +41,18 @@ class primitive
     void bind();
 };
 
+class texture
+{
+    uint32_t id = 0;
+
+  public:
+    texture(const engine::image::rgb24 &image);
+    texture(const engine::image::rgba32 &image);
+
+    ~texture();
+    void bind(uint32_t unit);
+};
+
 class gbuffer
 {
     uint32_t fbo = 0;
@@ -62,7 +78,6 @@ class base : public engine::exception
     base(const std::string &message) : engine::exception(message) {}
 };
 } // namespace engine::gpu::exception
-
 
 namespace engine::gpu::shader
 {

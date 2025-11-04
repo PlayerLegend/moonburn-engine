@@ -195,3 +195,53 @@ void engine::gpu::primitive::draw()
         gl_call(glDrawArrays, GL_TRIANGLES, 0, count);
     }
 }
+
+engine::gpu::texture::texture(const engine::image::rgb24 &image)
+{
+    gl_call(glGenTextures, 1, &id);
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            GL_RGB,
+            image.width,
+            image.height,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            image.contents.data());
+
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
+    gl_call(
+        glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl_call(glGenerateMipmap, GL_TEXTURE_2D);
+}
+
+engine::gpu::texture::texture(const engine::image::rgba32 &image)
+{
+    gl_call(glGenTextures, 1, &id);
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            image.width,
+            image.height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            image.contents.data());
+
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
+    gl_call(
+        glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl_call(glGenerateMipmap, GL_TEXTURE_2D);
+}
