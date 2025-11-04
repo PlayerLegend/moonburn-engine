@@ -19,7 +19,7 @@ struct rgb24
 {
     uint8_t r, g, b;
 };
-}; // namespace pixel
+}; // namespace engine::pixel
 
 namespace engine::image
 {
@@ -31,25 +31,34 @@ class exception : engine::exception
 
 class rgba32
 {
+    std::vector<pixel::rgba32> contents;
+
   public:
     uint16_t width;
     uint16_t height;
-    std::vector<pixel::rgba32> contents;
     rgba32(const engine::memory::const_view input);
     rgba32(const std::string &path);
+    const engine::pixel::rgba32 *data() const
+    {
+        return contents.data();
+    }
 };
 
 class rgb24
 {
-  public:
     std::vector<pixel::rgba32> contents;
 
+  public:
     rgb24(const engine::memory::const_view
               input); // initialize from png binary data
     rgb24(const std::string &path);
     uint16_t width;
     uint16_t height;
     std::vector<pixel::rgb24> pixels;
+    const engine::pixel::rgb24 *data() const
+    {
+        return pixels.data();
+    }
 };
 
 using rgba32_file = filesystem::file<image::rgba32>;
@@ -66,6 +75,6 @@ class rgba32_cache : public filesystem::cache<image::rgba32>
     }
 };
 
-} // namespace image
+} // namespace engine::image
 
 extern template class filesystem::cache<engine::image::rgba32>;
