@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
     assert(argc == 2);
 
-    image::rgba32 image(argv[1]);
+    engine::image::rgba32 image(argv[1]);
 
     std::cout << "Success\n";
 }

@@ -12,9 +12,9 @@ int main(int argc, char *argv[])
 
     filesystem::whitelist whitelist(image_dir);
 
-    image::rgba32_cache cache(whitelist);
+    engine::image::rgba32_cache cache(whitelist);
 
-    const image::rgba32 & image(*cache[image_path]);
+    const engine::image::rgba32 & image(*cache[image_path]);
 
     std::cout << "Image dimensions: " << image.width << "x" << image.height << "\n";
 

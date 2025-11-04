@@ -1,3 +1,5 @@
+#pragma once
+
 #include <engine/vec.hpp>
 #include <memory>
 #include <string>

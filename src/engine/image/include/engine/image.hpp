@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace pixel
+namespace engine::pixel
 {
 struct rgba32
 {
@@ -21,7 +21,7 @@ struct rgb24
 };
 }; // namespace pixel
 
-namespace image
+namespace engine::image
 {
 class exception : engine::exception
 {
@@ -31,20 +31,19 @@ class exception : engine::exception
 
 class rgba32
 {
-    std::vector<pixel::rgba32> contents;
-
   public:
     uint16_t width;
     uint16_t height;
+    std::vector<pixel::rgba32> contents;
     rgba32(const engine::memory::const_view input);
     rgba32(const std::string &path);
 };
 
 class rgb24
 {
+  public:
     std::vector<pixel::rgba32> contents;
 
-  public:
     rgb24(const engine::memory::const_view
               input); // initialize from png binary data
     rgb24(const std::string &path);
@@ -69,7 +68,4 @@ class rgba32_cache : public filesystem::cache<image::rgba32>
 
 } // namespace image
 
-namespace filesystem
-{
-extern template class filesystem::cache<image::rgba32>;
-} // namespace filesystem
+extern template class filesystem::cache<engine::image::rgba32>;

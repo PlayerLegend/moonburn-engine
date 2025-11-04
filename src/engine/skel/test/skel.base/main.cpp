@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     filesystem::whitelist wl(glb_path.parent_path().string());
     filesystem::cache_binary fs_bin(wl);
-    image::rgba32_cache fs_img(wl);
+    engine::image::rgba32_cache fs_img(wl);
 
     gltf::gltf_cache cache(wl, fs_bin, fs_img);
 

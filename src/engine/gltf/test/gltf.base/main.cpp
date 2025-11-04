@@ -8,7 +8,7 @@ void test_example1(const std::string &path)
 
     filesystem::whitelist wl(root);
     filesystem::cache_binary fs_bin(wl);
-    image::rgba32_cache fs_img(wl);
+    engine::image::rgba32_cache fs_img(wl);
 
     gltf::gltf_cache cache(wl, fs_bin, fs_img);
 
@@ -187,7 +187,7 @@ void test_example2(const std::string &path)
 
     filesystem::whitelist wl(root);
     filesystem::cache_binary fs_bin(wl);
-    image::rgba32_cache fs_img(wl);
+    engine::image::rgba32_cache fs_img(wl);
 
     gltf::gltf_cache cache(wl, fs_bin, fs_img);
 

@@ -539,15 +539,15 @@ class gltf
 
     gltf(const std::string &_path,
          ::filesystem::cache_binary &_fs_bin,
-         ::image::rgba32_cache &_fs_img);
+         engine::image::rgba32_cache &_fs_img);
 };
 
 class gltf_cache : public filesystem::cache<gltf,
                                             ::filesystem::cache_binary &,
-                                            ::image::rgba32_cache &>
+                                            engine::image::rgba32_cache &>
 {
     ::filesystem::cache_binary &fs_bin;
-    ::image::rgba32_cache &fs_img;
+    engine::image::rgba32_cache &fs_img;
 
   protected:
     reference load(const std::string &path) override
@@ -558,10 +558,10 @@ class gltf_cache : public filesystem::cache<gltf,
   public:
     gltf_cache(class filesystem::whitelist &wl,
                filesystem::cache_binary &_fs_bin,
-               ::image::rgba32_cache &_fs_img)
+               engine::image::rgba32_cache &_fs_img)
         : filesystem::cache<gltf,
                             ::filesystem::cache_binary &,
-                            ::image::rgba32_cache &>(wl),
+                            engine::image::rgba32_cache &>(wl),
           fs_bin(_fs_bin), fs_img(_fs_img)
     {
     }

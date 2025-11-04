@@ -743,7 +743,7 @@ parse_animation_channel_path(const std::string &name)
 
 ::gltf::gltf::gltf(const std::string &_path,
                    ::filesystem::cache_binary &fs_bin,
-                   ::image::rgba32_cache &fs_img)
+                   engine::image::rgba32_cache &fs_img)
 {
     const filesystem::cache_binary::reference glb_ref = fs_bin[_path];
     const filesystem::allocation &glb_alloc = *glb_ref;
