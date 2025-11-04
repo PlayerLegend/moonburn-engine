@@ -9,6 +9,7 @@
 namespace gltf
 {
 class mesh_primitive;
+class texture;
 }
 
 namespace engine::gpu::attributes
@@ -46,8 +47,7 @@ class texture
     uint32_t id = 0;
 
   public:
-    texture(const engine::image::rgb24 &image);
-    texture(const engine::image::rgba32 &image);
+    texture(const gltf::texture &texture);
 
     ~texture();
     void bind(uint32_t unit);

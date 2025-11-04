@@ -196,52 +196,44 @@ void engine::gpu::primitive::draw()
     }
 }
 
-engine::gpu::texture::texture(const engine::image::rgb24 &image)
+engine::gpu::texture::texture(const gltf::texture &texture)
 {
+    gl_check_error();
+
     gl_call(glGenTextures, 1, &id);
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
-
-    gl_call(glTexImage2D,
-            GL_TEXTURE_2D,
-            0,
-            GL_RGB,
-            image.width,
-            image.height,
-            0,
-            GL_RGB,
-            GL_UNSIGNED_BYTE,
-            image.contents.data());
 
     gl_call(glTexParameteri,
             GL_TEXTURE_2D,
             GL_TEXTURE_MIN_FILTER,
-            GL_LINEAR_MIPMAP_LINEAR);
-    gl_call(
-        glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    gl_call(glGenerateMipmap, GL_TEXTURE_2D);
-}
+            (GLint)texture.sampler.min_filter);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_MAG_FILTER,
+            (GLint)texture.sampler.mag_filter);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            (GLint)texture.sampler.wrap_s);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            (GLint)texture.sampler.wrap_t);
 
-engine::gpu::texture::texture(const engine::image::rgba32 &image)
-{
-    gl_call(glGenTextures, 1, &id);
-    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+    const engine::image::rgba32 &image = texture.source.contents;
 
     gl_call(glTexImage2D,
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            image.width,
-            image.height,
+            (GLsizei)image.width,
+            (GLsizei)image.height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            image.contents.data());
+            image.data());
 
-    gl_call(glTexParameteri,
-            GL_TEXTURE_2D,
-            GL_TEXTURE_MIN_FILTER,
-            GL_LINEAR_MIPMAP_LINEAR);
-    gl_call(
-        glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     gl_call(glGenerateMipmap, GL_TEXTURE_2D);
+
+    gl_call(glBindTexture, GL_TEXTURE_2D, 0);
 }
