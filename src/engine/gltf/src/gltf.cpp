@@ -1,4 +1,5 @@
 #include <cmath>
+#include <engine/filesystem.hpp>
 #include <engine/gltf.hpp>
 #include <iostream>
 
@@ -212,6 +213,21 @@ gltf::buffer_view::buffer_view(const json::object &root, const gltf &gltf)
         target = buffer_view_target::UNSET;
 }
 
+engine::image::rgba32 gltf::buffer_view::get_image() const
+{
+    engine::memory::const_view buffer_contents = buffer.contents;
+    engine::memory::const_view buffer_view_contents =
+        engine::memory::const_view{buffer_contents.begin + byte_offset,
+                                   buffer_contents.begin + byte_offset +
+                                       byte_length};
+
+    if (!buffer_contents.contains(buffer_view_contents))
+        throw ::gltf::exception::parse_error(
+            "Buffer view is out of bounds of buffer contents");
+
+    return engine::image::rgba32(buffer_view_contents);
+}
+
 static gltf::attribute_type parse_attribute_type(const std::string &name)
 {
     if (name == "SCALAR")
@@ -333,14 +349,47 @@ gltf::sampler::sampler(const json::object &root)
 {
 }
 
-gltf::image::image(const json::object &root, const gltf &gltf)
-    : name(get_string(root, "name")), mime_type(get_string(root, "mimeType")),
-      uri(get_string(root, "uri"))
+const class ::gltf::buffer_view *
+get_optional_buffer_view(const json::object &root,
+                         const std::string &key,
+                         const ::gltf::gltf &gltf)
 {
-    json::object::const_iterator buffer_view_it = root.find("bufferView");
-    if (buffer_view_it != root.end())
-        buffer_view =
-            &gltf.get_buffer_view(buffer_view_it->second.strict_int());
+    json::object::const_iterator it = root.find(key);
+    if (it != root.end())
+        return &gltf.get_buffer_view(it->second.strict_int());
+    return nullptr;
+}
+
+static engine::image::rgba32 get_image(const std::string &uri,
+                                       const ::gltf::buffer_view *buffer_view,
+                                       const ::gltf::gltf &gltf,
+                                       ::filesystem::cache_binary &cache)
+{
+    if (buffer_view)
+    {
+        return buffer_view->get_image();
+    }
+    else if (!uri.empty())
+    {
+        ::filesystem::cache_binary::reference ref = cache[uri];
+        const ::filesystem::allocation &allocation = *ref;
+        return engine::image::rgba32(allocation);
+    }
+    else
+    {
+        throw gltf::exception::parse_error(
+            "Image must have either bufferView or uri");
+    }
+}
+
+::gltf::image::image(const json::object &root,
+                     const gltf &gltf,
+                     ::filesystem::cache_binary &cache)
+    : name(get_string(root, "name")),
+      buffer_view(get_optional_buffer_view(root, "bufferView", gltf)),
+      mime_type(get_string(root, "mimeType")), uri(get_string(root, "uri")),
+      contents(get_image(uri, buffer_view, gltf, cache))
+{
 }
 
 gltf::texture::texture(const json::object &root, const gltf &gltf)
@@ -803,7 +852,7 @@ parse_animation_channel_path(const std::string &name)
 
     if (_images)
         for (const json::object &image : *_images)
-            images.push_back(::gltf::image(image, *this));
+            images.push_back(::gltf::image(image, *this, fs_bin));
 
     if (_samplers)
         for (const json::object &sampler : *_samplers)

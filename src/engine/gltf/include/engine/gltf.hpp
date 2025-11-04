@@ -65,6 +65,7 @@ class buffer_view
     offset byte_length;
     offset byte_stride;
     enum buffer_view_target target;
+    engine::image::rgba32 get_image() const;
     buffer_view(const json::object &root, const gltf &gltf);
 };
 enum class component_type : uint16_t
@@ -178,7 +179,10 @@ class image
     const class buffer_view *buffer_view;
     std::string mime_type;
     std::string uri;
-    image(const json::object &root, const gltf &gltf);
+    engine::image::rgba32 contents;
+    image(const json::object &root,
+          const gltf &gltf,
+          ::filesystem::cache_binary &cache);
 };
 
 enum class mag_filter : uint16_t
