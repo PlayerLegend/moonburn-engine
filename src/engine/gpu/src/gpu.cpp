@@ -250,3 +250,166 @@ void engine::gpu::texture::bind(uint32_t unit)
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
 }
 
+engine::gpu::gbuffer::gbuffer(uint32_t width, uint32_t height)
+{
+#define POSITION_FORMAT GL_RGB32F
+#define NORMAL_FORMAT GL_RGB16F
+#define ALBEDO_SPECULAR_FORMAT GL_RGBA8
+#define DEPTH_STENCIL_FORMAT GL_DEPTH24_STENCIL8
+
+    gl_check_error();
+
+    gl_call(glGenFramebuffers, 1, &fbo);
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
+
+    gl_call(glGenTextures, 1, &position);
+    gl_call(glBindTexture, GL_TEXTURE_2D, position);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            POSITION_FORMAT,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_RGB,
+            GL_FLOAT,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT0,
+            GL_TEXTURE_2D,
+            position,
+            0);
+
+    gl_call(glGenTextures, 1, &normal);
+    gl_call(glBindTexture, GL_TEXTURE_2D, normal);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            NORMAL_FORMAT,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_RGB,
+            GL_FLOAT,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT1,
+            GL_TEXTURE_2D,
+            normal,
+            0);
+
+    gl_call(glGenTextures, 1, &albedo_specular);
+    gl_call(glBindTexture, GL_TEXTURE_2D, albedo_specular);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            ALBEDO_SPECULAR_FORMAT,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT2,
+            GL_TEXTURE_2D,
+            albedo_specular,
+            0);
+
+    gl_call(glGenTextures, 1, &depth_stencil);
+    gl_call(glBindTexture, GL_TEXTURE_2D, depth_stencil);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            DEPTH_STENCIL_FORMAT,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_DEPTH_STENCIL,
+            GL_UNSIGNED_INT_24_8,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_DEPTH_STENCIL_ATTACHMENT,
+            GL_TEXTURE_2D,
+            depth_stencil,
+            0);
+
+    GLenum draw_buffers[3] = {GL_COLOR_ATTACHMENT0,
+                              GL_COLOR_ATTACHMENT1,
+                              GL_COLOR_ATTACHMENT2};
+    gl_call(glDrawBuffers, 3, draw_buffers);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        gl_call(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+        throw engine::gpu::exception::base(
+            "Failed to create gbuffer: incomplete framebuffer");
+    }
+
+    gl_call(glBindTexture, GL_TEXTURE_2D, 0);
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+}
+
+engine::gpu::gbuffer::~gbuffer()
+{
+    if (depth_stencil)
+        glDeleteTextures(1, &depth_stencil);
+    if (albedo_specular)
+        glDeleteTextures(1, &albedo_specular);
+    if (normal)
+        glDeleteTextures(1, &normal);
+    if (position)
+        glDeleteTextures(1, &position);
+    if (fbo)
+        glDeleteFramebuffers(1, &fbo);
+}
+
+void engine::gpu::gbuffer::bind()
+{
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
+}

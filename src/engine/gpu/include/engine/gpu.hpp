@@ -58,8 +58,8 @@ class gbuffer
     uint32_t fbo = 0;
     uint32_t position = 0;
     uint32_t normal = 0;
-    uint32_t albedo = 0;
-    uint32_t depth = 0;
+    uint32_t albedo_specular = 0;
+    uint32_t depth_stencil = 0;
 
   public:
     gbuffer(uint32_t width, uint32_t height);
