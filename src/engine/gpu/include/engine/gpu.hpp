@@ -10,7 +10,7 @@ namespace gltf
 {
 class mesh_primitive;
 class texture;
-}
+} // namespace gltf
 
 namespace engine::gpu::attributes
 {
