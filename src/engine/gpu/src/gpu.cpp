@@ -237,3 +237,16 @@ engine::gpu::texture::texture(const gltf::texture &texture)
 
     gl_call(glBindTexture, GL_TEXTURE_2D, 0);
 }
+
+engine::gpu::texture::~texture()
+{
+    if (id)
+        glDeleteTextures(1, &id);
+}
+
+void engine::gpu::texture::bind(uint32_t unit)
+{
+    gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+}
+
