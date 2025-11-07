@@ -285,3 +285,19 @@ template <> vec::fmat3::mat3(const vec::fmat4 &m)
     indices[8] = m[10];
 }
 
+template <>
+vec::fmat3 vec::fmat3::operator*(const fmat3 &rhs) const
+{
+    vec::fmat3 result;
+    for (int col = 0; col < 3; ++col)
+    {
+        for (int row = 0; row < 3; ++row)
+        {
+            float sum = 0.0f;
+            for (int k = 0; k < 3; ++k)
+                sum += (*this)[k * 3 + row] * rhs[col * 3 + k];
+            result[col * 3 + row] = sum;
+        }
+    }
+    return result;
+}
