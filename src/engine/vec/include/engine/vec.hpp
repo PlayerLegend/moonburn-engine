@@ -251,6 +251,8 @@ template <typename T> class mat4
 
 using fmat4 = mat4<float>;
 
+using fmat3 = mat3<float>;
+
 class transform3
 {
   public:
