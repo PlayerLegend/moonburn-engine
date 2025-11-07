@@ -1,7 +1,13 @@
+#include "engine/vec.hpp"
 #include <array>
 #include <engine/gltf.hpp>
 #include <engine/gpu.hpp>
 #include <glad/glad.h>
+
+#define UNIFORM_NAME_SKIN "u_skin"
+#define UNIFORM_NAME_SKIN_COUNT "u_skin_count"
+#define UNIFORM_NAME_TRANSFORM "u_transform"
+#define UNIFORM_NAME_NORMAL_MATRIX "u_normal_matrix"
 
 #define gl_check_error()                                                       \
     {                                                                          \
@@ -412,6 +418,125 @@ engine::gpu::gbuffer::~gbuffer()
 void engine::gpu::gbuffer::bind()
 {
     gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
+}
+
+engine::gpu::shader::shader::shader(uint32_t type, std::string source)
+{
+    gl_check_error();
+
+    id = glCreateShader(type);
+    const char *source_cstr = source.c_str();
+    gl_call(glShaderSource, id, 1, &source_cstr, nullptr);
+    gl_call(glCompileShader, id);
+
+    GLint compile_status = GL_FALSE;
+    gl_call(glGetShaderiv, id, GL_COMPILE_STATUS, &compile_status);
+    if (compile_status != GL_TRUE)
+    {
+        GLint log_length = 0;
+        gl_call(glGetShaderiv, id, GL_INFO_LOG_LENGTH, &log_length);
+
+        std::string log(log_length, '\0');
+        gl_call(glGetShaderInfoLog, id, log_length, nullptr, log.data());
+
+        glDeleteShader(id);
+        throw engine::gpu::exception::base("Failed to compile shader: " + log);
+    }
+}
+
+engine::gpu::shader::shader::~shader()
+{
+    if (id)
+        glDeleteShader(id);
+}
+
+engine::gpu::shader::vertex::vertex::vertex(std::string source)
+    : shader(GL_VERTEX_SHADER, source)
+{
+}
+
+engine::gpu::shader::fragment::fragment::fragment(std::string source)
+    : shader(GL_FRAGMENT_SHADER, source)
+{
+}
+
+engine::gpu::shader::program::program(const vertex *vertex_shader,
+                                      const fragment *fragment_shader)
+{
+    gl_check_error();
+    id = glCreateProgram();
+    if (vertex_shader)
+        gl_call(glAttachShader, id, *vertex_shader);
+    if (fragment_shader)
+        gl_call(glAttachShader, id, *fragment_shader);
+    gl_call(glLinkProgram, id);
+    GLint link_status = GL_FALSE;
+    gl_call(glGetProgramiv, id, GL_LINK_STATUS, &link_status);
+#define buf_size 512
+
+    if (link_status != GL_TRUE)
+    {
+        GLint log_length = 0;
+        gl_call(glGetProgramiv, id, GL_INFO_LOG_LENGTH, &log_length);
+        if (log_length > buf_size)
+            log_length = buf_size;
+        GLchar log[buf_size];
+        gl_call(glGetProgramInfoLog, id, log_length, nullptr, log);
+        glDeleteProgram(id);
+        throw engine::gpu::exception::base("Failed to link program: " +
+                                           std::string(log, log_length));
+    }
+
+    u_skin = glGetUniformLocation(id, UNIFORM_NAME_SKIN);
+    u_skin_count = glGetUniformLocation(id, UNIFORM_NAME_SKIN_COUNT);
+    u_transform = glGetUniformLocation(id, UNIFORM_NAME_TRANSFORM);
+    u_normal_matrix = glGetUniformLocation(id, UNIFORM_NAME_NORMAL_MATRIX);
+}
+
+engine::gpu::shader::program::~program()
+{
+    if (id)
+        glDeleteProgram(id);
+}
+
+void engine::gpu::shader::program::bind()
+{
+    gl_call(glUseProgram, id);
+}
+
+void engine::gpu::shader::program::set_skin(
+    const std::vector<vec::fmat4> &matrices)
+{
+    gl_call(glUniformMatrix4fv,
+            u_skin,
+            (GLsizei)matrices.size(),
+            GL_FALSE,
+            (const GLfloat *)matrices.data());
+}
+
+void engine::gpu::shader::program::set_transform(
+    const vec::transform3 &transform)
+{
+    if (u_transform != -1)
+    {
+        vec::fmat4_transform3 model_matrix = transform;
+        gl_call(glUniformMatrix4fv,
+                u_transform,
+                1,
+                GL_FALSE,
+                (const GLfloat *)&model_matrix);
+    }
+
+    if (u_normal_matrix != -1)
+    {
+        vec::fmat3 normal_matrix =
+            transpose((vec::fmat3)vec::fmat4_transform3_inverse(transform));
+        gl_call(glUniformMatrix3fv,
+                u_normal_matrix,
+                1,
+                GL_FALSE,
+                (const GLfloat *)&normal_matrix);
+    }
 }
 
 void engine::gpu::skin::allocate_texture(uint32_t length)

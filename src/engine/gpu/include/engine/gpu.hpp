@@ -117,18 +117,46 @@ class base : public engine::exception
 
 namespace engine::gpu::shader
 {
+class shader
+{
+    uint32_t id = 0;
 
-class geometry
+  public:
+    shader(uint32_t type, std::string source);
+    ~shader();
+    operator uint32_t() const
+    {
+        return id;
+    }
+};
+
+class vertex : public shader
 {
   public:
-    uint32_t program = 0;
+    vertex(std::string source);
+};
 
-    geometry();
-    ~geometry();
+class fragment : public shader
+{
+  public:
+    fragment(std::string source);
+};
+
+class program
+{
+    uint32_t id = 0;
+    int32_t u_skin = -1;
+    int32_t u_skin_count = -1;
+    int32_t u_transform = -1;
+    int32_t u_normal_matrix = -1;
+
+  public:
+    program(const vertex *vertex_shader, const fragment *fragment_shader);
+    ~program();
 
     void bind();
     void set_skin(const std::vector<vec::fmat4> &matrices);
-    void set_transform(const vec::fmat4 &matrix);
+    void set_transform(const vec::transform3 &transform);
 };
 
 } // namespace engine::gpu::shader
