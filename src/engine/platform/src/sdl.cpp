@@ -70,7 +70,7 @@ class window
             return;
         }
 
-        if (!gladLoadGLLoader(SDL_GL_GetProcAddress))
+        if (!gladLoadGLES2Loader(SDL_GL_GetProcAddress))
         {
             std::cout << "Failed to initialize GLAD" << std::endl;
             exit(1);
