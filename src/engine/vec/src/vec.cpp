@@ -10,8 +10,8 @@ template <> vec::fmat4 vec::fmat4::operator*(const fmat4 &rhs) const
         {
             float sum = 0.0f;
             for (int k = 0; k < 4; ++k)
-                sum += this->indices[k * 4 + row] * rhs.indices[col * 4 + k];
-            result.indices[col * 4 + row] = sum;
+                sum += (*this)[k * 4 + row] * rhs[col * 4 + k];
+            result[col * 4 + row] = sum;
         }
     }
     return result;
