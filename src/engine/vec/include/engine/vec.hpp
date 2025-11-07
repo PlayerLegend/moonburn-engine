@@ -55,6 +55,14 @@ template <typename T> class vec3
     {
         return vec3(this->x / rhs, this->y / rhs, this->z / rhs);
     }
+    T &operator[](std::size_t index)
+    {
+        return *(&x + index);
+    }
+    const T &operator[](std::size_t index) const
+    {
+        return *(&x + index);
+    }
 
     class decompose
     {
@@ -68,17 +76,10 @@ template <typename T> class vec3
 template <typename T> class vec4
 {
   public:
-    union
-    {
-        struct
-        {
-            T x;
-            T y;
-            T z;
-            T w;
-        };
-        std::array<T, 4> indices;
-    };
+    T x;
+    T y;
+    T z;
+    T w;
     vec4() : x(0), y(0), z(0), w(0) {}
     vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
     vec4 operator+(const vec4 &rhs) const
@@ -103,9 +104,13 @@ template <typename T> class vec4
     {
         return vec4(this->x / rhs, this->y / rhs, this->z / rhs, this->w / rhs);
     }
-    T operator[](std::size_t index) const
+    const T &operator[](std::size_t index) const
     {
-        return indices[index];
+        return *(&x + index);
+    }
+    T &operator[](std::size_t index)
+    {
+        return *(&x + index);
     }
     vec4 operator*(const vec4 &rhs) const;
     vec3<T> operator*(const vec3<T> &rhs) const;
@@ -154,7 +159,11 @@ template <typename T> class mat4
     template <typename... L> mat4(L... ts) : indices{ts...} {};
     mat4<T> operator*(const mat4<T> &rhs) const;
     vec4<T> operator*(const vec4<T> &rhs) const;
-    T operator[](std::size_t index) const
+    T &operator[](std::size_t index)
+    {
+        return indices[index];
+    }
+    const T &operator[](std::size_t index) const
     {
         return indices[index];
     }
