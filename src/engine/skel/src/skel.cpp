@@ -477,7 +477,7 @@ void skel::pose::accumulate(const std::string &root_name,
     {
         skel::interpolation_params params(time_data.input, time);
 
-        for (const skel::bone_index &bone_index : bone_hierarchy)
+        for (const skel::bone_index bone_index : bone_hierarchy)
         {
             const skel::armature_bone &bone = armature.bones[bone_index];
 
