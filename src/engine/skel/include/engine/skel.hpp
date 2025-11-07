@@ -48,7 +48,7 @@ class interpolation_params
 
 template <typename T> class animation_sampler_step
 {
-    const std::vector<T> &output;
+    const std::vector<T> output;
 
   public:
     animation_sampler_step(const gltf::animation_sampler &gltf_sampler);
@@ -57,7 +57,7 @@ template <typename T> class animation_sampler_step
 
 template <typename T> class animation_sampler_linear
 {
-    const std::vector<T> &output;
+    const std::vector<T> output;
 
   public:
     animation_sampler_linear(const gltf::animation_sampler &gltf_sampler);
@@ -66,7 +66,7 @@ template <typename T> class animation_sampler_linear
 
 template <typename T> class animation_sampler_cubicspline
 {
-    const std::vector<vec::cubicspline<T>> &output;
+    const std::vector<vec::cubicspline<T>> output;
 
   public:
     animation_sampler_cubicspline(const gltf::animation_sampler &gltf_sampler);
