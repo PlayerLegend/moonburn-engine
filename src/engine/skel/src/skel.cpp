@@ -347,8 +347,8 @@ void skel::pose::clear()
 }
 
 void skel::pose::accumulate_translation(bone_index bone,
-                                          const vec::fvec3 &translation,
-                                          float weight)
+                                        const vec::fvec3 &translation,
+                                        float weight)
 {
     vec::fvec3 &current_value = transforms[bone].translation;
     float &current_weight = weights[bone].translation;
@@ -368,8 +368,8 @@ void skel::pose::accumulate_translation(bone_index bone,
 }
 
 void skel::pose::accumulate_rotation(bone_index bone,
-                                       const vec::fvec4 &rotation,
-                                       float weight)
+                                     const vec::fvec4 &rotation,
+                                     float weight)
 {
     vec::fvec4 &current_value = transforms[bone].rotation;
     float &current_weight = weights[bone].rotation;
@@ -389,8 +389,8 @@ void skel::pose::accumulate_rotation(bone_index bone,
 }
 
 void skel::pose::accumulate_scale(bone_index bone,
-                                    const vec::fvec3 &scale,
-                                    float weight)
+                                  const vec::fvec3 &scale,
+                                  float weight)
 {
     vec::fvec3 &current_value = transforms[bone].scale;
     float &current_weight = weights[bone].scale;
