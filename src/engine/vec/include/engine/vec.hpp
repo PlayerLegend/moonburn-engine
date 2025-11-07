@@ -321,4 +321,13 @@ class fmat4_transform3 : public fmat4
                      const fmat4_scale &scale);
 };
 
+class fmat4_transform3_inverse : public fmat4
+{
+  public:
+    fmat4_transform3_inverse(const transform3 &transform);
+    fmat4_transform3_inverse(const fmat4_translation &translation,
+                             const fmat4_rotation &rotation,
+                             const fmat4_scale &scale);
+};
+
 }; // namespace vec

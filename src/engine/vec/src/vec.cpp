@@ -202,6 +202,30 @@ vec::fmat4_transform3::fmat4_transform3(const fmat4_translation &translation,
 {
 }
 
+vec::fmat4_transform3_inverse::fmat4_transform3_inverse(
+    const transform3 &transform)
+    : fmat4_transform3_inverse(
+          fmat4_translation(vec::fvec3(-transform.translation.x,
+                                       -transform.translation.y,
+                                       -transform.translation.z)),
+          fmat4_rotation(vec::fvec4(-transform.rotation.x,
+                                    -transform.rotation.y,
+                                    -transform.rotation.z,
+                                    transform.rotation.w)),
+          fmat4_scale(vec::fvec3(1.0f / transform.scale.x,
+                                 1.0f / transform.scale.y,
+                                 1.0f / transform.scale.z)))
+{
+}
+
+vec::fmat4_transform3_inverse::fmat4_transform3_inverse(
+    const fmat4_translation &translation,
+    const fmat4_rotation &rotation,
+    const fmat4_scale &scale)
+    : fmat4(scale * rotation * translation)
+{
+}
+
 vec::fmat4 transpose(const vec::fmat4 &m)
 {
     vec::fmat4 result;
