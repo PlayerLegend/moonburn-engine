@@ -201,3 +201,29 @@ vec::fmat4_transform3::fmat4_transform3(const fmat4_translation &translation,
     : fmat4(translation * rotation * scale)
 {
 }
+
+vec::fmat4 transpose(const vec::fmat4 &m)
+{
+    vec::fmat4 result;
+    for (int col = 0; col < 4; ++col)
+    {
+        for (int row = 0; row < 4; ++row)
+        {
+            result[col * 4 + row] = m[row * 4 + col];
+        }
+    }
+    return result;
+}
+
+vec::fmat3 transpose(const vec::fmat3 &m)
+{
+    vec::fmat3 result;
+    for (int col = 0; col < 3; ++col)
+    {
+        for (int row = 0; row < 3; ++row)
+        {
+            result[col * 3 + row] = m[row * 3 + col];
+        }
+    }
+    return result;
+}

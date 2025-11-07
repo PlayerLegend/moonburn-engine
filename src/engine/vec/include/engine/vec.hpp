@@ -289,6 +289,8 @@ fscalar length(const fvec4 &v);
 fvec4 normal(const fvec4 &v);
 fscalar dot(const fvec4 &a, const fvec4 &b);
 fvec4 slerp(const fvec4 &a, const fvec4 &b, float t);
+fmat4 transpose(const fmat4 &m);
+fmat3 transpose(const fmat3 &m);
 
 class fmat4_translation : public fmat4
 {
