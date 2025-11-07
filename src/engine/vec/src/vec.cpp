@@ -271,3 +271,17 @@ template <> bool vec::fmat3::operator==(const vec::fmat3 &rhs) const
     }
     return true;
 }
+
+template <> vec::fmat3::mat3(const vec::fmat4 &m)
+{
+    indices[0] = m[0];
+    indices[1] = m[1];
+    indices[2] = m[2];
+    indices[3] = m[4];
+    indices[4] = m[5];
+    indices[5] = m[6];
+    indices[6] = m[8];
+    indices[7] = m[9];
+    indices[8] = m[10];
+}
+
