@@ -10,6 +10,7 @@ namespace gltf
 {
 class mesh_primitive;
 class texture;
+class mesh;
 } // namespace gltf
 
 namespace engine::gpu::attributes
@@ -87,6 +88,20 @@ class skin
     }
 
     void bind(uint32_t unit);
+};
+
+class mesh
+{
+    std::vector<primitive> primitives;
+    class skin skin;
+
+  public:
+    mesh(const class gltf::mesh &mesh);
+
+    void operator=(const std::vector<vec::fmat4> &matrices)
+    {
+        skin.set_pose(matrices);
+    }
 };
 
 } // namespace engine::gpu
