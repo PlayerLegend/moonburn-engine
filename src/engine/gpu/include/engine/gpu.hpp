@@ -68,6 +68,27 @@ class gbuffer
     void bind();
 };
 
+class skin
+{
+    uint32_t id = 0;
+    uint32_t length = 0;
+
+    void allocate_texture(uint32_t length);
+    void free_texture();
+
+  public:
+    skin(uint32_t length);
+    ~skin();
+
+    void set_pose(const std::vector<vec::fmat4> &matrices);
+    void operator=(const std::vector<vec::fmat4> &matrices)
+    {
+        set_pose(matrices);
+    }
+
+    void bind(uint32_t unit);
+};
+
 } // namespace engine::gpu
 
 namespace engine::gpu::exception

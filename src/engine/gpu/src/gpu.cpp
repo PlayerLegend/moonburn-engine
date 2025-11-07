@@ -413,3 +413,68 @@ void engine::gpu::gbuffer::bind()
 {
     gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
 }
+
+void engine::gpu::skin::allocate_texture(uint32_t length)
+{
+    gl_check_error();
+
+    if (id)
+    {
+        free_texture();
+    }
+
+    gl_call(glGenTextures, 1, &id);
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glPixelStorei, GL_UNPACK_ALIGNMENT, 1);
+    gl_call(glTexStorage2D, GL_TEXTURE_2D, 1, GL_RGBA32F, length * 4, 1);
+    this->length = length;
+}
+
+void engine::gpu::skin::free_texture()
+{
+    if (id)
+    {
+        glDeleteTextures(1, &id);
+        id = 0;
+        length = 0;
+    }
+}
+
+engine::gpu::skin::skin(uint32_t length)
+{
+    allocate_texture(length);
+}
+
+engine::gpu::skin::~skin()
+{
+    free_texture();
+}
+
+void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
+{
+    if (matrices.size() != length)
+        allocate_texture(matrices.size());
+
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
+    gl_call(glPixelStorei, GL_UNPACK_ALIGNMENT, 1);
+    gl_call(glTexSubImage2D,
+            GL_TEXTURE_2D,
+            0,
+            0,
+            0,
+            length * 4,
+            1,
+            GL_RGBA,
+            GL_FLOAT,
+            matrices.data());
+}
