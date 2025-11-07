@@ -251,3 +251,23 @@ vec::fmat3 transpose(const vec::fmat3 &m)
     }
     return result;
 }
+
+template <> bool vec::fmat4::operator==(const vec::fmat4 &rhs) const
+{
+    for (int i = 0; i < 16; i++)
+    {
+        if (std::fabs(this->indices[i] - rhs.indices[i]) > vec::epsilon)
+            return false;
+    }
+    return true;
+}
+
+template <> bool vec::fmat3::operator==(const vec::fmat3 &rhs) const
+{
+    for (int i = 0; i < 9; i++)
+    {
+        if (std::fabs(this->indices[i] - rhs.indices[i]) > vec::epsilon)
+            return false;
+    }
+    return true;
+}
