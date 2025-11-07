@@ -57,6 +57,7 @@ skel::armature::armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf)
     {
         const gltf::node &joint_node = *gltf_skin.joints[joint_index];
         bones_names[joint_node.name] = joint_index;
+        bones[joint_index].name = joint_node.name;
         default_transforms.push_back(joint_node.transform);
         for (const gltf::node *child_node : joint_node.children)
         {

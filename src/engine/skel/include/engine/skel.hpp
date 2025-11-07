@@ -122,8 +122,11 @@ class armature_bone
     bone_index peer;
     bone_index parent;
     armature_bone() : child(max_bones), peer(max_bones), parent(max_bones) {}
-    armature_bone(bone_index _child, bone_index _peer, bone_index _parent)
-        : child(_child), peer(_peer), parent(_parent)
+    armature_bone(const std::string &_name,
+                  bone_index _child,
+                  bone_index _peer,
+                  bone_index _parent)
+        : name(_name), child(_child), peer(_peer), parent(_parent)
     {
     }
 };
