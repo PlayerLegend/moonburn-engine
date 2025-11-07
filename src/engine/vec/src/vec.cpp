@@ -49,8 +49,21 @@ template <> vec::fvec4 vec::fmat4::operator*(const vec::fvec4 &rhs) const
     {
         float sum = 0.0f;
         for (int col = 0; col < 4; ++col)
-            sum += this->indices[col * 4 + row] * rhs.indices[col];
-        result.indices[row] = sum;
+            sum += (*this)[col * 4 + row] * rhs[col];
+        result[row] = sum;
+    }
+    return result;
+}
+
+template <> vec::fvec3 vec::fmat3::operator*(const vec::fvec3 &rhs) const
+{
+    vec::fvec3 result;
+    for (int row = 0; row < 3; ++row)
+    {
+        float sum = 0.0f;
+        for (int col = 0; col < 3; ++col)
+            sum += (*this)[col * 3 + row] * rhs[col];
+        result[row] = sum;
     }
     return result;
 }
