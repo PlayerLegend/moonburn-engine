@@ -125,6 +125,39 @@ using i16vec4 = vec4<int16_t>;
 using u16vec2 = vec2<uint16_t>;
 using u8vec4 = vec4<uint8_t>;
 
+template <typename T> class mat4;
+
+template <typename T> class mat3
+{
+  protected:
+    std::array<T, 9> indices;
+
+  public:
+    mat3()
+    {
+        for (int i = 0; i < 9; i++)
+            indices[i] = (i % 4 == 0) ? (T)1 : (T)0;
+    };
+    using column = std::array<T, 3>;
+    mat3(const column &c0, const column &c1, const column &c2)
+        : indices(
+              {c0[0], c0[1], c0[2], c1[0], c1[1], c1[2], c2[0], c2[1], c2[2]})
+    {
+    }
+    mat3(const mat4<T> &m);
+    // template <typename... L> mat3(L... ts) : indices{ts...} {};
+    mat3<T> operator*(const mat3<T> &rhs) const;
+    vec3<T> operator*(const vec3<T> &rhs) const;
+    const T &operator[](std::size_t index) const
+    {
+        return indices[index];
+    }
+    T &operator[](std::size_t index)
+    {
+        return indices[index];
+    }
+    bool operator==(const mat3<T> &rhs) const;
+};
 template <typename T> class mat4
 {
   protected:
