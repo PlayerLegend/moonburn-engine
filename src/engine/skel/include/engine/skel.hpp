@@ -161,7 +161,8 @@ class frame
     {
     }
 };
-class result
+
+class pose
 {
     class transform_weight
     {

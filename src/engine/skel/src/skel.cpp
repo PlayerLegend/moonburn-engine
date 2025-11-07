@@ -333,12 +333,12 @@ skel::interpolation_params::interpolation_params(
     h11 = t * t * t - t * t;
 }
 
-skel::result::result(const skel::armature &_armature) : armature(_armature)
+skel::pose::pose(const skel::armature &_armature) : armature(_armature)
 {
     clear();
 }
 
-void skel::result::clear()
+void skel::pose::clear()
 {
     transforms = armature.default_transforms;
     weights.resize(0);
@@ -346,7 +346,7 @@ void skel::result::clear()
     output.resize(0);
 }
 
-void skel::result::accumulate_translation(bone_index bone,
+void skel::pose::accumulate_translation(bone_index bone,
                                           const vec::fvec3 &translation,
                                           float weight)
 {
@@ -367,7 +367,7 @@ void skel::result::accumulate_translation(bone_index bone,
     }
 }
 
-void skel::result::accumulate_rotation(bone_index bone,
+void skel::pose::accumulate_rotation(bone_index bone,
                                        const vec::fvec4 &rotation,
                                        float weight)
 {
@@ -388,7 +388,7 @@ void skel::result::accumulate_rotation(bone_index bone,
     }
 }
 
-void skel::result::accumulate_scale(bone_index bone,
+void skel::pose::accumulate_scale(bone_index bone,
                                     const vec::fvec3 &scale,
                                     float weight)
 {
@@ -408,7 +408,7 @@ void skel::result::accumulate_scale(bone_index bone,
     }
 }
 
-skel::result::operator const std::vector<vec::fmat4> &()
+skel::pose::operator const std::vector<vec::fmat4> &()
 {
     if (output.size() != 0)
         return output;
@@ -463,10 +463,10 @@ std::vector<skel::bone_index> get_bone_hierarchy(const skel::armature &armature,
     return bone_hierarchy;
 }
 
-void skel::result::accumulate(const std::string &root_name,
-                              const skel::animation &animation,
-                              float time,
-                              float weight)
+void skel::pose::accumulate(const std::string &root_name,
+                            const skel::animation &animation,
+                            float time,
+                            float weight)
 {
     output.resize(0);
 
