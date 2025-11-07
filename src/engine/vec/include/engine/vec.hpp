@@ -189,7 +189,41 @@ template <typename T> class mat4
                    c3[3]})
     {
     }
-    template <typename... L> mat4(L... ts) : indices{ts...} {};
+    // template <typename... L> mat4(L... ts) : indices{ts...} {};
+    mat4(T s0,
+         T s1,
+         T s2,
+         T s3,
+         T s4,
+         T s5,
+         T s6,
+         T s7,
+         T s8,
+         T s9,
+         T s10,
+         T s11,
+         T s12,
+         T s13,
+         T s14,
+         T s15)
+        : indices({s0,
+                   s1,
+                   s2,
+                   s3,
+                   s4,
+                   s5,
+                   s6,
+                   s7,
+                   s8,
+                   s9,
+                   s10,
+                   s11,
+                   s12,
+                   s13,
+                   s14,
+                   s15})
+    {
+    }
     mat4<T> operator*(const mat4<T> &rhs) const;
     vec4<T> operator*(const vec4<T> &rhs) const;
     T &operator[](std::size_t index)
@@ -200,6 +234,19 @@ template <typename T> class mat4
     {
         return indices[index];
     }
+    operator mat3<T>() const
+    {
+        return mat3<T>(indices[0],
+                       indices[1],
+                       indices[2],
+                       indices[4],
+                       indices[5],
+                       indices[6],
+                       indices[8],
+                       indices[9],
+                       indices[10]);
+    }
+    bool operator==(const mat4<T> &rhs) const;
 };
 
 using fmat4 = mat4<float>;
