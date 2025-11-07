@@ -142,6 +142,25 @@ class armature
     armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf);
 };
 
+class frame
+{
+  public:
+    std::string root;
+    const skel::animation &animation;
+    float time;
+    float weight;
+    frame(const std::string &root,
+          const skel::animation &animation,
+          float time,
+          float weight)
+        : root(root), animation(animation), time(time), weight(weight)
+    {
+    }
+    frame(const skel::animation &animation, float time, float weight)
+        : animation(animation), time(time), weight(weight)
+    {
+    }
+};
 class result
 {
     class transform_weight
@@ -178,7 +197,18 @@ class result
     {
         accumulate(armature.root_name, animation, time, weight);
     }
-    result(const class armature &armature);
+    void accumulate(const frame &_frame)
+    {
+        accumulate(_frame.root.empty() ? armature.root_name : _frame.root,
+                   _frame.animation,
+                   _frame.time,
+                   _frame.weight);
+    }
+    void operator+=(const frame &_frame)
+    {
+        accumulate(_frame);
+    }
+    pose(const class armature &armature);
 };
 
 } // namespace skel
