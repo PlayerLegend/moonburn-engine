@@ -298,8 +298,7 @@ template <> vec::fmat3::mat3(const vec::fmat4 &m)
     indices[8] = m[10];
 }
 
-template <>
-vec::fmat3 vec::fmat3::operator*(const fmat3 &rhs) const
+template <> vec::fmat3 vec::fmat3::operator*(const fmat3 &rhs) const
 {
     vec::fmat3 result;
     for (int col = 0; col < 3; ++col)
@@ -313,4 +312,14 @@ vec::fmat3 vec::fmat3::operator*(const fmat3 &rhs) const
         }
     }
     return result;
+}
+
+template <> vec::vec4<float>::vec4(const vec::fvec3 &axis, float angle_rad)
+{
+    float half_angle = angle_rad * 0.5f;
+    float s = std::sin(half_angle);
+    x = axis.x * s;
+    y = axis.y * s;
+    z = axis.z * s;
+    w = std::cos(half_angle);
 }

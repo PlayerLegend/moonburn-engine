@@ -10,9 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace filesystem
-{
-namespace exception
+namespace engine::filesystem::exception
 {
 class base : public engine::exception
 {
@@ -34,8 +32,9 @@ class wrong_type : public filesystem::exception::base
     {
     }
 };
-}; // namespace exception
-
+}; // namespace engine::filesystem::exception
+namespace engine::filesystem
+{
 class allocation : public engine::memory::allocation
 {
   public:
@@ -55,25 +54,30 @@ class whitelist
     bool contains(const std::string &path);
 };
 
-template <typename T, typename... L> class file
-{
-  protected:
-    std::filesystem::file_time_type last_modified;
-    T contents;
-
-  public:
-    file(const std::string &path, L... args) : contents(path, args...) {}
-    operator const T &()
-    {
-        return contents;
-    }
-};
-
 template <typename T, typename... L> class cache
 {
   public:
-    using reference = std::shared_ptr<file<T, L...>>;
-    using file_t = ::filesystem::file<T, L...>;
+    class file
+    {
+      protected:
+        std::filesystem::file_time_type last_modified;
+        std::string path;
+        T contents;
+
+      public:
+        file(const std::string &_path,
+             std::filesystem::file_time_type mtime,
+             L... args)
+            : last_modified(mtime), path(_path), contents(path, args...)
+        {
+        }
+        operator const T &()
+        {
+            return contents;
+        }
+    };
+
+    using reference = std::shared_ptr<file>;
     using map = std::unordered_map<std::string, reference>;
 
   protected:
@@ -81,6 +85,8 @@ template <typename T, typename... L> class cache
     map contents;
     std::mutex mutex;
 
+    virtual std::filesystem::file_time_type
+    get_mtime(const std::string &path) = 0;
     virtual reference load(const std::string &path) = 0;
 
   public:
@@ -92,6 +98,7 @@ template <typename T, typename... L> class cache
         if (!whitelist.contains(_path))
             throw filesystem::exception::not_found("Path not in whitelist: " +
                                                    _path);
+
         typename map::iterator it = contents.find(_path);
         if (it == contents.end())
         {
@@ -108,11 +115,16 @@ class cache_binary : public cache<filesystem::allocation>
   protected:
     reference load(const std::string &path) override
     {
-        return std::make_shared<cache_binary::file_t>(path);
+        return std::make_shared<cache_binary::file>(path, get_mtime(path));
+    }
+
+    std::filesystem::file_time_type get_mtime(const std::string &path) override
+    {
+        return std::filesystem::last_write_time(path);
     }
 
   public:
     cache_binary(class whitelist &wl) : cache<filesystem::allocation>(wl) {}
 };
 
-}; // namespace filesystem
+}; // namespace engine::filesystem

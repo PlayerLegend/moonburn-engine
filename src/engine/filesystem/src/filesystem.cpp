@@ -1,6 +1,8 @@
 #include <engine/filesystem.hpp>
 #include <fstream>
 
+namespace engine::filesystem
+{
 engine::memory::allocation from_file(const std::string &file_path)
 {
     std::ifstream stream(file_path);
@@ -48,3 +50,4 @@ bool filesystem::whitelist::contains(const std::string &path)
     std::lock_guard<std::mutex> lock(mutex);
     return paths.find(std::filesystem::absolute(path).string()) != paths.end();
 }
+} // namespace engine::filesystem

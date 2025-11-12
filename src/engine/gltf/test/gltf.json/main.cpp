@@ -3,7 +3,7 @@
 
 std::string dump_json_string_from_glb(std::string path)
 {
-    filesystem::allocation glb_alloc(path);
+    engine::filesystem::allocation glb_alloc(path);
     gltf::glb glb(glb_alloc);
     std::string result(glb.json.begin, glb.json.end);
     return result;

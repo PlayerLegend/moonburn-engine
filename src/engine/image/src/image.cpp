@@ -8,7 +8,9 @@
 #ifdef USE_LIBPNG
 #include <png.h>
 
-engine::image::rgb24::rgb24(const engine::memory::const_view input)
+namespace engine::image
+{
+rgb24::rgb24(const engine::memory::const_view input)
 {
     png_image image;
 
@@ -45,7 +47,7 @@ engine::image::rgb24::rgb24(const engine::memory::const_view input)
     height = image.height;
 }
 
-engine::image::rgba32::rgba32(const engine::memory::const_view input)
+rgba32::rgba32(const engine::memory::const_view input)
 {
     png_image image;
 
@@ -84,16 +86,20 @@ engine::image::rgba32::rgba32(const engine::memory::const_view input)
 
 #endif // USE_LIBPNG
 
-engine::image::rgba32::rgba32(const std::string &path)
+rgba32::rgba32(const std::string &path)
     : rgba32(filesystem::allocation(path)) {};
 
-engine::image::rgb24::rgb24(const std::string &path)
-    : rgb24(filesystem::allocation(path)) {};
+rgb24::rgb24(const std::string &path) : rgb24(filesystem::allocation(path)) {};
 
-template class filesystem::cache<engine::image::rgba32>;
+} // namespace engine::image
 
-engine::image::rgba32_cache::reference
-engine::image::rgba32_cache::load(const std::string &path)
+namespace engine::image::cache
 {
-    return std::make_shared<filesystem::file<image::rgba32>>(path);
+
+cache::rgba32::reference cache::rgba32::load(const std::string &path)
+{
+    return std::make_shared<engine::image::cache::rgba32::file>(path, get_mtime(path));
 }
+} // namespace engine::image::cache
+
+template class engine::filesystem::cache<engine::image::rgba32>;

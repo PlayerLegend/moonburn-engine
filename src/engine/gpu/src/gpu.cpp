@@ -1,5 +1,6 @@
 #include "engine/vec.hpp"
 #include <array>
+#include <cmath>
 #include <engine/gltf.hpp>
 #include <engine/gpu.hpp>
 #include <glad/glad.h>
@@ -155,6 +156,14 @@ engine::gpu::primitive::primitive(const class gltf::mesh_primitive &input)
 
     gl_call(glBindVertexArray, 0);
     gl_call(glBindBuffer, GL_ARRAY_BUFFER, 0);
+
+    for (const vec::fvec3 &position :
+         (std::vector<vec::fvec3>)(*input.attributes.position))
+    {
+        float length = vec::length(position);
+        if (radius < length)
+            radius = length;
+    }
 }
 
 engine::gpu::primitive::~primitive()
@@ -602,4 +611,52 @@ void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
             GL_RGBA,
             GL_FLOAT,
             matrices.data());
+}
+
+engine::gpu::frame::light_point::light_point(const vec::fvec3 &position,
+                                             const vec::fvec3 &color,
+                                             float radius)
+    : position(position), color(color), radius(radius)
+{
+#define threshold_intensity 1
+    intensity = threshold_intensity * radius * radius;
+}
+
+engine::gpu::frame::camera::camera(const vec::fvec3 &position,
+                                   const vec::fvec4 &rotation,
+                                   float fov_y,
+                                   float aspect_ratio)
+    : position(position), rotation(rotation), fov_y(fov_y),
+      aspect_ratio(aspect_ratio)
+{
+    float fov_x = std::atan(std::tan(fov_y * 0.5f) * aspect_ratio) * 2.0f;
+    float half_fov_y = fov_y / 2.0f;
+    float half_fov_x = fov_x / 2.0f;
+
+    vec::fvec3 plane_normal_back = vec::fvec3(0, 0, 1);
+    vec::fvec3 plane_normal_right =
+        vec::fvec3(std::cos(half_fov_x), 0, std::sin(half_fov_x));
+    vec::fvec3 plane_normal_up =
+        vec::fvec3(0, std::cos(half_fov_y), std::sin(half_fov_y));
+
+    frustum_normal[0] = rotation * plane_normal_back;
+    frustum_normal[1] = rotation * plane_normal_right;
+    frustum_normal[2] =
+        rotation * vec::fvec3(-plane_normal_right.x, 0, plane_normal_right.z);
+    frustum_normal[3] = rotation * plane_normal_up;
+    frustum_normal[4] =
+        rotation * vec::fvec3(0, -plane_normal_up.y, plane_normal_up.z);
+}
+
+bool engine::gpu::frame::camera::sphere_is_visible(const vec::fvec3 &center,
+                                                   float radius) const
+{
+    vec::fvec3 to_sphere = center - position;
+
+    for (const vec::fvec3 &normal : frustum_normal)
+    {
+        if (vec::dot(to_sphere, normal) > radius)
+            return false;
+    }
+    return true;
 }

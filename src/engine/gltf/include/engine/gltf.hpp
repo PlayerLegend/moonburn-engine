@@ -182,7 +182,7 @@ class image
     engine::image::rgba32 contents;
     image(const json::object &root,
           const gltf &gltf,
-          ::filesystem::cache_binary &cache);
+          engine::filesystem::cache_binary &cache);
 };
 
 enum class mag_filter : uint16_t
@@ -542,30 +542,39 @@ class gltf
     }
 
     gltf(const std::string &_path,
-         ::filesystem::cache_binary &_fs_bin,
-         engine::image::rgba32_cache &_fs_img);
+         engine::filesystem::cache_binary &_fs_bin,
+         engine::image::cache::rgba32 &_fs_img);
 };
 
-class gltf_cache : public filesystem::cache<gltf,
-                                            ::filesystem::cache_binary &,
-                                            engine::image::rgba32_cache &>
+class gltf_cache
+    : public engine::filesystem::cache<gltf,
+                                       engine::filesystem::cache_binary &,
+                                       engine::image::cache::rgba32 &>
 {
-    ::filesystem::cache_binary &fs_bin;
-    engine::image::rgba32_cache &fs_img;
+    engine::filesystem::cache_binary &fs_bin;
+    engine::image::cache::rgba32 &fs_img;
 
   protected:
     reference load(const std::string &path) override
     {
-        return std::make_shared<gltf_cache::file_t>(path, fs_bin, fs_img);
+        return std::make_shared<gltf_cache::file>(path,
+                                                  get_mtime(path),
+                                                  fs_bin,
+                                                  fs_img);
+    }
+
+    std::filesystem::file_time_type get_mtime(const std::string &path) override
+    {
+        return std::filesystem::last_write_time(path);
     }
 
   public:
-    gltf_cache(class filesystem::whitelist &wl,
-               filesystem::cache_binary &_fs_bin,
-               engine::image::rgba32_cache &_fs_img)
-        : filesystem::cache<gltf,
-                            ::filesystem::cache_binary &,
-                            engine::image::rgba32_cache &>(wl),
+    gltf_cache(class engine::filesystem::whitelist &wl,
+               engine::filesystem::cache_binary &_fs_bin,
+               engine::image::cache::rgba32 &_fs_img)
+        : engine::filesystem::cache<gltf,
+                                    engine::filesystem::cache_binary &,
+                                    engine::image::cache::rgba32 &>(wl),
           fs_bin(_fs_bin), fs_img(_fs_img)
     {
     }

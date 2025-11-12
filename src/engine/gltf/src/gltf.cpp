@@ -363,7 +363,7 @@ get_optional_buffer_view(const json::object &root,
 static engine::image::rgba32 get_image(const std::string &uri,
                                        const ::gltf::buffer_view *buffer_view,
                                        const ::gltf::gltf &gltf,
-                                       ::filesystem::cache_binary &cache)
+                                       engine::filesystem::cache_binary &cache)
 {
     if (buffer_view)
     {
@@ -371,8 +371,8 @@ static engine::image::rgba32 get_image(const std::string &uri,
     }
     else if (!uri.empty())
     {
-        ::filesystem::cache_binary::reference ref = cache[uri];
-        const ::filesystem::allocation &allocation = *ref;
+        engine::filesystem::cache_binary::reference ref = cache[uri];
+        const engine::filesystem::allocation &allocation = *ref;
         return engine::image::rgba32(allocation);
     }
     else
@@ -384,7 +384,7 @@ static engine::image::rgba32 get_image(const std::string &uri,
 
 ::gltf::image::image(const json::object &root,
                      const gltf &gltf,
-                     ::filesystem::cache_binary &cache)
+                     engine::filesystem::cache_binary &cache)
     : name(get_string(root, "name")),
       buffer_view(get_optional_buffer_view(root, "bufferView", gltf)),
       mime_type(get_string(root, "mimeType")), uri(get_string(root, "uri")),
@@ -791,11 +791,11 @@ parse_animation_channel_path(const std::string &name)
 }
 
 ::gltf::gltf::gltf(const std::string &_path,
-                   ::filesystem::cache_binary &fs_bin,
-                   engine::image::rgba32_cache &fs_img)
+                   engine::filesystem::cache_binary &fs_bin,
+                   engine::image::cache::rgba32 &fs_img)
 {
-    const filesystem::cache_binary::reference glb_ref = fs_bin[_path];
-    const filesystem::allocation &glb_alloc = *glb_ref;
+    const engine::filesystem::cache_binary::reference glb_ref = fs_bin[_path];
+    const engine::filesystem::allocation &glb_alloc = *glb_ref;
     glb glb(parse_glb(glb_alloc));
     json::object root(json::parse_memory(_path, glb.json));
     this->asset = ::gltf::asset(root.at("asset"));

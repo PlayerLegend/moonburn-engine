@@ -13,6 +13,11 @@ class texture;
 class mesh;
 } // namespace gltf
 
+namespace skel
+{
+class pose;
+} // namespace skel
+
 namespace engine::gpu::attributes
 {
 using position = vec::fvec3;
@@ -36,6 +41,7 @@ class primitive
     bool short_indices = false;
 
   public:
+    float radius = 0;
     primitive(const class gltf::mesh_primitive &primitive);
     ~primitive();
 
@@ -96,6 +102,7 @@ class mesh
     class skin skin;
 
   public:
+    float radius;
     mesh(const class gltf::mesh &mesh);
 
     void operator=(const std::vector<vec::fmat4> &matrices)
@@ -160,3 +167,68 @@ class program
 };
 
 } // namespace engine::gpu::shader
+
+namespace engine::gpu::frame
+{
+class actor
+{
+  public:
+    engine::gpu::mesh &mesh;
+    skel::pose &pose;
+    vec::transform3 transform;
+
+    actor(engine::gpu::mesh &mesh,
+          skel::pose &pose,
+          const vec::transform3 &transform)
+        : mesh(mesh), pose(pose), transform(transform)
+    {
+    }
+};
+
+class light_point
+{
+  public:
+    vec::fvec3 position;
+    vec::fvec3 color;
+    float intensity;
+    float radius;
+    light_point(const vec::fvec3 &position,
+                const vec::fvec3 &color,
+                float radius);
+};
+
+class camera
+{
+    std::array<vec::fvec3, 5> frustum_normal;
+
+  public:
+    vec::fvec3 position;
+    vec::fvec4 rotation;
+    float fov_y;
+    float aspect_ratio;
+    camera(const vec::fvec3 &position,
+           const vec::fvec4 &rotation,
+           float fov_y,
+           float aspect_ratio);
+    bool sphere_is_visible(const vec::fvec3 &center, float radius) const;
+};
+
+class queue
+{
+    std::vector<actor> actors;
+    std::vector<light_point> lights;
+
+  public:
+    void operator+=(const actor &actor)
+    {
+        actors.push_back(actor);
+    }
+    void operator+=(const light_point &light)
+    {
+        lights.push_back(light);
+    }
+    std::vector<actor> get_visible_actors(const camera &camera);
+    std::vector<light_point> get_visible_lights(const camera &camera);
+};
+
+} // namespace engine::gpu::frame

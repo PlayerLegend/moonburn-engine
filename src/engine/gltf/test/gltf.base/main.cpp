@@ -6,9 +6,9 @@ void test_example1(const std::string &path)
 {
     const std::string root = std::filesystem::path(path).parent_path().string();
 
-    filesystem::whitelist wl(root);
-    filesystem::cache_binary fs_bin(wl);
-    engine::image::rgba32_cache fs_img(wl);
+    engine::filesystem::whitelist wl(root);
+    engine::filesystem::cache_binary fs_bin(wl);
+    engine::image::cache::rgba32 fs_img(wl);
 
     gltf::gltf_cache cache(wl, fs_bin, fs_img);
 
@@ -185,9 +185,9 @@ void test_example2(const std::string &path)
 {
     const std::string root = std::filesystem::path(path).parent_path().string();
 
-    filesystem::whitelist wl(root);
-    filesystem::cache_binary fs_bin(wl);
-    engine::image::rgba32_cache fs_img(wl);
+    engine::filesystem::whitelist wl(root);
+    engine::filesystem::cache_binary fs_bin(wl);
+    engine::image::cache::rgba32 fs_img(wl);
 
     gltf::gltf_cache cache(wl, fs_bin, fs_img);
 

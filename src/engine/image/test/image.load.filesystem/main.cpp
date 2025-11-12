@@ -10,9 +10,9 @@ int main(int argc, char *argv[])
 
     std::string image_dir = std::filesystem::path(image_path).parent_path().string();
 
-    filesystem::whitelist whitelist(image_dir);
+    engine::filesystem::whitelist whitelist(image_dir);
 
-    engine::image::rgba32_cache cache(whitelist);
+    engine::image::cache::rgba32 cache(whitelist);
 
     const engine::image::rgba32 & image(*cache[image_path]);
 

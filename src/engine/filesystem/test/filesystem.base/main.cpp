@@ -12,15 +12,15 @@ int main(int argc, char *argv[])
     }
     std::filesystem::path file_path = argv[1];
 
-    filesystem::whitelist wl(file_path.parent_path().string());
-    filesystem::cache_binary cache(wl);
-    filesystem::cache_binary::reference ref = cache[file_path.string()];
+    engine::filesystem::whitelist wl(file_path.parent_path().string());
+    engine::filesystem::cache_binary cache(wl);
+    engine::filesystem::cache_binary::reference ref = cache[file_path.string()];
     if (!ref)
     {
         std::cerr << "Failed to load file: " << file_path.string() << "\n";
         return 2;
     }
-    const filesystem::allocation &alloc = *ref;
+    const engine::filesystem::allocation &alloc = *ref;
     std::cout << "Loaded file: " << file_path.string() << " (" << alloc.size()
               << " bytes)\n";
 

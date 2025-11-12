@@ -82,6 +82,7 @@ template <typename T> class vec4
     T w;
     vec4() : x(0), y(0), z(0), w(0) {}
     vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
+    vec4(const vec3<T> & axis, T angle);
     vec4 operator+(const vec4 &rhs) const
     {
         return vec4(this->x + rhs.x,
