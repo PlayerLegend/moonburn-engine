@@ -96,9 +96,9 @@ rgb24::rgb24(const std::string &path) : rgb24(filesystem::allocation(path)) {};
 namespace engine::image::cache
 {
 
-cache::rgba32::reference cache::rgba32::load(const std::string &path)
+cache::rgba32::reference cache::rgba32::load(const std::string &path, std::filesystem::file_time_type mtime)
 {
-    return std::make_shared<engine::image::cache::rgba32::file>(path, get_mtime(path));
+    return std::make_shared<engine::image::cache::rgba32::file>(path, mtime);
 }
 } // namespace engine::image::cache
 

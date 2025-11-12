@@ -555,10 +555,10 @@ class gltf_cache
     engine::image::cache::rgba32 &fs_img;
 
   protected:
-    reference load(const std::string &path) override
+    reference load(const std::string &path, std::filesystem::file_time_type mtime) override
     {
         return std::make_shared<gltf_cache::file>(path,
-                                                  get_mtime(path),
+                                                  mtime,
                                                   fs_bin,
                                                   fs_img);
     }

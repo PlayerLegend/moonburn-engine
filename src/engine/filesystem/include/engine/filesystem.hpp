@@ -60,15 +60,15 @@ template <typename T, typename... L> class cache
     class file
     {
       protected:
-        std::filesystem::file_time_type last_modified;
-        std::string path;
         T contents;
 
       public:
+        std::filesystem::file_time_type last_modified;
+        std::string path;
         file(const std::string &_path,
              std::filesystem::file_time_type mtime,
              L... args)
-            : last_modified(mtime), path(_path), contents(path, args...)
+            : contents(_path, args...), last_modified(mtime), path(_path)
         {
         }
         operator const T &()
@@ -87,7 +87,8 @@ template <typename T, typename... L> class cache
 
     virtual std::filesystem::file_time_type
     get_mtime(const std::string &path) = 0;
-    virtual reference load(const std::string &path) = 0;
+    virtual reference load(const std::string &path,
+                           std::filesystem::file_time_type) = 0;
 
   public:
     cache(class whitelist &wl) : whitelist(wl) {}
@@ -99,13 +100,11 @@ template <typename T, typename... L> class cache
             throw filesystem::exception::not_found("Path not in whitelist: " +
                                                    _path);
 
+        std::filesystem::file_time_type mtime = get_mtime(_path);
         typename map::iterator it = contents.find(_path);
-        if (it == contents.end())
-        {
-            reference ref = load(_path);
-            contents.emplace(_path, ref);
-            return ref;
-        }
+
+        if (it == contents.end() || it->second->last_modified < mtime)
+            return contents[_path] = load(_path, mtime);
         return it->second;
     };
 };
@@ -113,9 +112,9 @@ template <typename T, typename... L> class cache
 class cache_binary : public cache<filesystem::allocation>
 {
   protected:
-    reference load(const std::string &path) override
+    reference load(const std::string &path, std::filesystem::file_time_type mtime) override
     {
-        return std::make_shared<cache_binary::file>(path, get_mtime(path));
+        return std::make_shared<cache_binary::file>(path, mtime);
     }
 
     std::filesystem::file_time_type get_mtime(const std::string &path) override

@@ -69,7 +69,7 @@ namespace engine::image::cache
 class rgba32 : public filesystem::cache<image::rgba32>
 {
   protected:
-    reference load(const std::string &path) override;
+    reference load(const std::string &path, std::filesystem::file_time_type) override;
     std::filesystem::file_time_type get_mtime(const std::string &path) override
     {
         return std::filesystem::last_write_time(path);
