@@ -99,16 +99,10 @@ class skin
 class mesh
 {
     std::vector<primitive> primitives;
-    class skin skin;
 
   public:
     float radius;
     mesh(const class gltf::mesh &mesh);
-
-    void operator=(const std::vector<vec::fmat4> &matrices)
-    {
-        skin.set_pose(matrices);
-    }
 };
 
 } // namespace engine::gpu
