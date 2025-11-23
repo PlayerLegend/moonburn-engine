@@ -447,6 +447,7 @@ class animation
 
 class gltf
 {
+  public:
     class asset asset;
     std::vector<buffer> buffers;
     std::vector<::gltf::buffer_view> buffer_views;
@@ -461,7 +462,6 @@ class gltf
     std::vector<scene> scenes;
     std::vector<animation> animations;
 
-  public:
     const ::gltf::asset &get_asset() const
     {
         return asset;
