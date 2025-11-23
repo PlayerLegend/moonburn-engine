@@ -13,9 +13,9 @@ class object
 
   public:
     const engine::gpu::mesh &mesh;
-    const skel::armature &armature;
+    const skel::armature *armature;
 
-    object(const engine::gpu::mesh &mesh, const skel::armature &armature)
+    object(const engine::gpu::mesh &mesh, const skel::armature *armature)
         : mesh(mesh), armature(armature)
     {
     }
@@ -29,11 +29,8 @@ struct asset
     {
         vec::transform3 transform;
         const engine::gpu::mesh &mesh;
-        const skel::armature &armature;
-        object(const engine::gpu::mesh &mesh, const skel::armature &armature)
-            : mesh(mesh), armature(armature)
-        {
-        }
+        const skel::armature *armature;
+        object(const engine::gpu::mesh &mesh, const skel::armature *armature);
     };
 
     std::unordered_map<std::string, engine::gpu::mesh> meshes;
