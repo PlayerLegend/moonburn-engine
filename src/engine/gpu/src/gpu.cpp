@@ -596,7 +596,7 @@ engine::gpu::skin::~skin()
 
 void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
 {
-    if (matrices.size() != length)
+    if (matrices.size() < length)
         allocate_texture(matrices.size());
 
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
