@@ -4,14 +4,107 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Launch image.load",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/engine/test/json.base/json.base",
+            "program": "${workspaceFolder}/build/src/engine/image/test/image.load.filesystem/image.load.filesystem",
             "args": [
-                "${workspaceFolder}/src/engine/test/json.base/test.json"
+                "${workspaceFolder}/src/engine/image/test/image.load.filesystem/test.png"
             ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "(gdb) Launch (gltf.base)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/engine/gltf/test/gltf.base/gltf.base",
+            "args": [
+                "${workspaceFolder}/src/engine/gltf/test/gltf.base/test1.glb",
+                "${workspaceFolder}/src/engine/gltf/test/gltf.base/test2.glb"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "(gdb) Launch (skel.base)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/engine/skel/test/skel.base/skel.base",
+            "args": [
+                "${workspaceFolder}/src/engine/skel/test/skel.base/test.glb"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "(gdb) Launch (json.base)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/engine/json/test/json.base/json.base",
+            "args": [
+                "${workspaceFolder}/src/engine/json/test/json.base/test1.json",
+                "${workspaceFolder}/src/engine/json/test/json.base/test2.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "(gdb) Launch (platform.base)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/engine/platform/test/platform.base/platform.base",
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
