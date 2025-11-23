@@ -57,16 +57,17 @@ class whitelist
 template <typename T, typename... L> class cache
 {
   public:
+    using mtime = std::filesystem::file_time_type;
     class file
     {
       protected:
         T contents;
 
       public:
-        std::filesystem::file_time_type last_modified;
+        mtime last_modified;
         std::string path;
         file(const std::string &_path,
-             std::filesystem::file_time_type mtime,
+             mtime mtime,
              L... args)
             : contents(_path, args...), last_modified(mtime), path(_path)
         {
@@ -100,7 +101,7 @@ template <typename T, typename... L> class cache
             throw filesystem::exception::not_found("Path not in whitelist: " +
                                                    _path);
 
-        std::filesystem::file_time_type mtime = get_mtime(_path);
+        mtime mtime = get_mtime(_path);
         typename map::iterator it = contents.find(_path);
 
         if (it == contents.end() || it->second->last_modified < mtime)
@@ -112,7 +113,8 @@ template <typename T, typename... L> class cache
 class cache_binary : public cache<filesystem::allocation>
 {
   protected:
-    reference load(const std::string &path, std::filesystem::file_time_type mtime) override
+    reference load(const std::string &path,
+                   std::filesystem::file_time_type mtime) override
     {
         return std::make_shared<cache_binary::file>(path, mtime);
     }
