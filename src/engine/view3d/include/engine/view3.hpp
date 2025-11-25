@@ -1,7 +1,5 @@
-#include <engine/gltf.hpp>
-#include <engine/gpu.hpp>
-#include <engine/skel.hpp>
 #include <engine/vec.hpp>
+#include <string>
 
 namespace engine::view3
 {
@@ -12,32 +10,11 @@ class object
     bool transform_mat_stale = true;
 
   public:
-    const engine::gpu::mesh &mesh;
-    const skel::armature *armature;
-
-    object(const engine::gpu::mesh &mesh, const skel::armature *armature)
-        : mesh(mesh), armature(armature)
-    {
-    }
+    object() {};
+    std::string mesh;
+    std::string armature;
     void set_transform(vec::transform3);
 };
-class light_point;
-class scene;
-struct asset
-{
-    struct object
-    {
-        vec::transform3 transform;
-        const engine::gpu::mesh &mesh;
-        const skel::armature *armature;
-        object(const engine::gpu::mesh &mesh, const skel::armature *armature);
-    };
 
-    std::unordered_map<std::string, engine::gpu::mesh> meshes;
-    std::unordered_map<std::string, skel::armature> armatures;
-    std::unordered_map<std::string, skel::animation> animations;
-    std::unordered_map<std::string, asset::object> nodes;
-
-    asset(const gltf::gltf &gltf);
-};
+void draw(const object &object, const vec::fmat4_view &view, const vec::fmat4_projection &proj);
 }; // namespace engine::view3

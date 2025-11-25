@@ -1296,6 +1296,23 @@ void gltf::accessor::dump_fvec3(std::vector<uint8_t> &output) const
     }
 }
 
+void gltf::accessor::dump_i16vec3(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC3)
+        throw exception::parse_error(
+            "Accessor type is not VEC3, cannot dump to i16vec3");
+
+    output.reserve(output.size() + count * 3 * sizeof(int16_t));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::i16vec3>(
+            output,
+            vec::i16vec3(i16_from_float(get_component_as_float(i, 0)),
+                         i16_from_float(get_component_as_float(i, 1)),
+                         i16_from_float(get_component_as_float(i, 2))));
+    }
+}
+
 void gltf::accessor::dump_i16vec2(std::vector<uint8_t> &output) const
 {
     if (type != ::gltf::attribute_type::VEC2)
@@ -1401,6 +1418,11 @@ void gltf::accessor::dump(std::vector<uint8_t> &output,
         if (target_component_type == component_type::FLOAT)
         {
             dump_fvec3(output);
+            return;
+        }
+        if (target_component_type == component_type::SHORT)
+        {
+            dump_i16vec3(output);
             return;
         }
         throw exception::parse_error(

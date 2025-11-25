@@ -1,14 +1,19 @@
 #include "engine/vec.hpp"
 #include <array>
-#include <cmath>
+// #include <cmath>
 #include <engine/gltf.hpp>
 #include <engine/gpu.hpp>
 #include <glad/glad.h>
+#include <iostream>
 
 #define UNIFORM_NAME_SKIN "u_skin"
 #define UNIFORM_NAME_SKIN_COUNT "u_skin_count"
-#define UNIFORM_NAME_TRANSFORM "u_transform"
-#define UNIFORM_NAME_NORMAL_MATRIX "u_normal_matrix"
+#define UNIFORM_NAME_MODEL_MAT4 "u_model"
+#define UNIFORM_NAME_VIEW_MAT4 "u_view"
+#define UNIFORM_NAME_PROJECTION_MAT4 "u_projection"
+#define UNIFORM_NAME_NORMAL_MAT3 "u_normal"
+#define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_mat_albedo_tex"
+#define UNIFORM_NAME_MVP_MAT4 "u_mvp"
 
 #define gl_check_error()                                                       \
     {                                                                          \
@@ -211,6 +216,16 @@ void engine::gpu::primitive::draw()
     }
 }
 
+engine::gpu::mesh::mesh(const class gltf::mesh &mesh) : radius(0)
+{
+    for (const gltf::mesh_primitive &primitive : mesh.primitives)
+        primitives.emplace_back(primitive);
+
+    for (const gpu::primitive &primitive : primitives)
+        if (radius < primitive.radius)
+            radius = primitive.radius;
+}
+
 engine::gpu::texture::texture(const gltf::texture &texture)
 {
     gl_check_error();
@@ -263,6 +278,103 @@ void engine::gpu::texture::bind(uint32_t unit)
 {
     gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
+}
+
+engine::gpu::target::target() : fbo(0), color(0), depth_stencil(0) {}
+
+engine::gpu::target::target(uint32_t width, uint32_t height)
+{
+    gl_check_error();
+
+    gl_call(glGenFramebuffers, 1, &fbo);
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
+
+    gl_call(glGenTextures, 1, &color);
+    gl_call(glBindTexture, GL_TEXTURE_2D, color);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA8,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT0,
+            GL_TEXTURE_2D,
+            color,
+            0);
+
+    gl_call(glGenTextures, 1, &depth_stencil);
+    gl_call(glBindTexture, GL_TEXTURE_2D, depth_stencil);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexParameteri,
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+    gl_call(glTexImage2D,
+            GL_TEXTURE_2D,
+            0,
+            GL_DEPTH24_STENCIL8,
+            (GLsizei)width,
+            (GLsizei)height,
+            0,
+            GL_DEPTH_STENCIL,
+            GL_UNSIGNED_INT_24_8,
+            nullptr);
+    gl_call(glFramebufferTexture2D,
+            GL_FRAMEBUFFER,
+            GL_DEPTH_STENCIL_ATTACHMENT,
+            GL_TEXTURE_2D,
+            depth_stencil,
+            0);
+
+    GLenum draw_buffers = GL_COLOR_ATTACHMENT0;
+    gl_call(glDrawBuffers, 1, &draw_buffers);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        gl_call(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+        throw engine::gpu::exception::base(
+            "Failed to create render target: incomplete framebuffer");
+    }
+
+    gl_call(glBindTexture, GL_TEXTURE_2D, 0);
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+}
+
+engine::gpu::target::~target()
+{
+    if (depth_stencil)
+        glDeleteTextures(1, &depth_stencil);
+    if (color)
+        glDeleteTextures(1, &color);
+    if (fbo)
+        glDeleteFramebuffers(1, &fbo);
+}
+
+void engine::gpu::target::bind()
+{
+    gl_call(glBindFramebuffer, GL_FRAMEBUFFER, fbo);
 }
 
 engine::gpu::gbuffer::gbuffer(uint32_t width, uint32_t height)
@@ -449,7 +561,9 @@ engine::gpu::shader::shader::shader(uint32_t type, std::string source)
         gl_call(glGetShaderInfoLog, id, log_length, nullptr, log.data());
 
         glDeleteShader(id);
-        throw engine::gpu::exception::base("Failed to compile shader: " + log);
+        std::string message = "Failed to compile shader: " + log;
+        std::cerr << message << std::endl;
+        throw engine::gpu::exception::base(message);
     }
 }
 
@@ -498,8 +612,10 @@ engine::gpu::shader::program::program(const vertex *vertex_shader,
 
     u_skin = glGetUniformLocation(id, UNIFORM_NAME_SKIN);
     u_skin_count = glGetUniformLocation(id, UNIFORM_NAME_SKIN_COUNT);
-    u_transform = glGetUniformLocation(id, UNIFORM_NAME_TRANSFORM);
-    u_normal_matrix = glGetUniformLocation(id, UNIFORM_NAME_NORMAL_MATRIX);
+    u_model = glGetUniformLocation(id, UNIFORM_NAME_MODEL_MAT4);
+
+    u_view = glGetUniformLocation(id, UNIFORM_NAME_VIEW_MAT4);
+    u_normal = glGetUniformLocation(id, UNIFORM_NAME_NORMAL_MAT3);
 }
 
 engine::gpu::shader::program::~program()
@@ -513,42 +629,74 @@ void engine::gpu::shader::program::bind()
     gl_call(glUseProgram, id);
 }
 
-void engine::gpu::shader::program::set_skin(
-    const std::vector<vec::fmat4> &matrices)
+void engine::gpu::shader::program::set_skin(const engine::gpu::skin &skin)
 {
-    gl_call(glUniformMatrix4fv,
-            u_skin,
-            (GLsizei)matrices.size(),
-            GL_FALSE,
-            (const GLfloat *)matrices.data());
+    uint32_t skin_unit = 2;
+    skin.bind(skin_unit);
+    if (u_skin != -1)
+        gl_call(glUniform1i, u_skin, skin_unit);
+    if (u_skin_count != -1)
+        gl_call(glUniform1i, u_skin_count, skin.bone_count);
 }
 
-void engine::gpu::shader::program::set_transform(
+void engine::gpu::shader::program::set_model_transform(
     const vec::transform3 &transform)
 {
-    if (u_transform != -1)
+    model = vec::fmat4_transform3(transform);
+    if (u_model != -1)
     {
-        vec::fmat4_transform3 model_matrix = transform;
         gl_call(glUniformMatrix4fv,
-                u_transform,
+                u_model,
                 1,
                 GL_FALSE,
-                (const GLfloat *)&model_matrix);
+                (const GLfloat *)&model);
     }
 
-    if (u_normal_matrix != -1)
+    if (u_mvp != -1)
     {
-        vec::fmat3 normal_matrix =
-            transpose((vec::fmat3)vec::fmat4_transform3_inverse(transform));
+        vec::fmat4 mvp = projection * view * model;
+        gl_call(glUniformMatrix4fv, u_mvp, 1, GL_FALSE, (const GLfloat *)&mvp);
+    }
+
+    if (u_normal != -1)
+    {
+        vec::fmat4_transform3_inverse inv(transform);
+        vec::fmat3 normal_matrix = vec::transpose(vec::fmat3(inv));
         gl_call(glUniformMatrix3fv,
-                u_normal_matrix,
+                u_normal,
                 1,
                 GL_FALSE,
                 (const GLfloat *)&normal_matrix);
     }
 }
 
-void engine::gpu::skin::allocate_texture(uint32_t length)
+void engine::gpu::shader::program::set_view(const vec::transform3 &transform)
+{
+    if (u_view != -1)
+    {
+        view = vec::fmat4_transform3_inverse(transform);
+        gl_call(glUniformMatrix4fv,
+                u_view,
+                1,
+                GL_FALSE,
+                (const GLfloat *)&view);
+    }
+}
+
+void engine::gpu::shader::program::set_perspective(const vec::perspective &p)
+{
+    if (u_projection != -1)
+    {
+        projection = vec::fmat4_perspective(p.fovy, p.aspect);
+        gl_call(glUniformMatrix4fv,
+                u_projection,
+                1,
+                GL_FALSE,
+                (const GLfloat *)&projection);
+    }
+}
+
+void engine::gpu::skin::allocate_texture(uint32_t bone_count)
 {
     gl_check_error();
 
@@ -570,8 +718,8 @@ void engine::gpu::skin::allocate_texture(uint32_t length)
             GL_TEXTURE_WRAP_T,
             GL_CLAMP_TO_EDGE);
     gl_call(glPixelStorei, GL_UNPACK_ALIGNMENT, 1);
-    gl_call(glTexStorage2D, GL_TEXTURE_2D, 1, GL_RGBA32F, length * 4, 1);
-    this->length = length;
+    gl_call(glTexStorage2D, GL_TEXTURE_2D, 1, GL_RGBA32F, bone_count * 4, 1);
+    this->bone_count = bone_count;
 }
 
 void engine::gpu::skin::free_texture()
@@ -580,7 +728,7 @@ void engine::gpu::skin::free_texture()
     {
         glDeleteTextures(1, &id);
         id = 0;
-        length = 0;
+        bone_count = 0;
     }
 }
 
@@ -596,7 +744,7 @@ engine::gpu::skin::~skin()
 
 void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
 {
-    if (matrices.size() < length)
+    if (matrices.size() < bone_count)
         allocate_texture(matrices.size());
 
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
@@ -606,11 +754,17 @@ void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
             0,
             0,
             0,
-            length * 4,
+            bone_count * 4,
             1,
             GL_RGBA,
             GL_FLOAT,
             matrices.data());
+}
+
+void engine::gpu::skin::bind(uint32_t unit) const
+{
+    gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
+    gl_call(glBindTexture, GL_TEXTURE_2D, id);
 }
 
 engine::gpu::frame::light_point::light_point(const vec::fvec3 &position,
@@ -622,41 +776,43 @@ engine::gpu::frame::light_point::light_point(const vec::fvec3 &position,
     intensity = threshold_intensity * radius * radius;
 }
 
-engine::gpu::frame::camera::camera(const vec::fvec3 &position,
-                                   const vec::fvec4 &rotation,
-                                   float fov_y,
-                                   float aspect_ratio)
-    : position(position), rotation(rotation), fov_y(fov_y),
-      aspect_ratio(aspect_ratio)
-{
-    float fov_x = std::atan(std::tan(fov_y * 0.5f) * aspect_ratio) * 2.0f;
-    float half_fov_y = fov_y / 2.0f;
-    float half_fov_x = fov_x / 2.0f;
+// #define fovx_to_fovy(fovx, aspect) 2.0 * atan(tan(0.5 * fovx) / aspect)
+// engine::gpu::frame::camera::camera(const vec::fvec3 &position,
+//                                    const vec::fvec4 &rotation,
+//                                    float _fovx,
+//                                    float aspect_ratio)
+//     : position(position), rotation(rotation), fovx(_fovx),
+//       aspect_ratio(aspect_ratio)
+// {
+//     float fovy = fovx_to_fovy(fovx, aspect_ratio);
+//     float half_fov_y = fovy / 2.0f;
+//     float half_fov_x = fovx / 2.0f;
 
-    vec::fvec3 plane_normal_back = vec::fvec3(0, 0, 1);
-    vec::fvec3 plane_normal_right =
-        vec::fvec3(std::cos(half_fov_x), 0, std::sin(half_fov_x));
-    vec::fvec3 plane_normal_up =
-        vec::fvec3(0, std::cos(half_fov_y), std::sin(half_fov_y));
+//     vec::fvec3 plane_normal_back = vec::fvec3(0, 0, 1);
+//     vec::fvec3 plane_normal_right =
+//         vec::fvec3(std::cos(half_fov_x), 0, std::sin(half_fov_x));
+//     vec::fvec3 plane_normal_up =
+//         vec::fvec3(0, std::cos(half_fov_y), std::sin(half_fov_y));
 
-    frustum_normal[0] = rotation * plane_normal_back;
-    frustum_normal[1] = rotation * plane_normal_right;
-    frustum_normal[2] =
-        rotation * vec::fvec3(-plane_normal_right.x, 0, plane_normal_right.z);
-    frustum_normal[3] = rotation * plane_normal_up;
-    frustum_normal[4] =
-        rotation * vec::fvec3(0, -plane_normal_up.y, plane_normal_up.z);
-}
+//     frustum_normal[0] = rotation * plane_normal_back;
+//     frustum_normal[1] = rotation * plane_normal_right;
+//     frustum_normal[2] =
+//         rotation * vec::fvec3(-plane_normal_right.x, 0,
+//         plane_normal_right.z);
+//     frustum_normal[3] = rotation * plane_normal_up;
+//     frustum_normal[4] =
+//         rotation * vec::fvec3(0, -plane_normal_up.y, plane_normal_up.z);
+// }
 
-bool engine::gpu::frame::camera::sphere_is_visible(const vec::fvec3 &center,
-                                                   float radius) const
-{
-    vec::fvec3 to_sphere = center - position;
+// bool engine::gpu::frame::camera::sphere_is_visible(const vec::fvec3 &center,
+//                                                    float radius) const
+// {
+//     vec::fvec3 to_sphere = center - position;
 
-    for (const vec::fvec3 &normal : frustum_normal)
-    {
-        if (vec::dot(to_sphere, normal) > radius)
-            return false;
-    }
-    return true;
-}
+//     for (const vec::fvec3 &normal : frustum_normal)
+//     {
+//         if (vec::dot(to_sphere, normal) > radius)
+//             return false;
+//     }
+//     return true;
+// }

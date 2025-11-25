@@ -36,30 +36,30 @@ template <typename T> class vec3
     T x;
     T y;
     T z;
-    vec3() : x(0), y(0), z(0) {}
-    vec3(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
+    constexpr vec3() : x(0), y(0), z(0) {}
+    constexpr vec3(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
 
-    vec3 operator+(const vec3 &rhs) const
+    constexpr vec3 operator+(const vec3 &rhs) const
     {
         return vec3(this->x + rhs.x, this->y + rhs.y, this->z + rhs.z);
     }
-    vec3 operator-(const vec3 &rhs) const
+    constexpr vec3 operator-(const vec3 &rhs) const
     {
         return vec3(this->x - rhs.x, this->y - rhs.y, this->z - rhs.z);
     }
-    vec3 operator*(const fscalar &rhs) const
+    constexpr vec3 operator*(const fscalar &rhs) const
     {
         return vec3(this->x * rhs, this->y * rhs, this->z * rhs);
     }
-    vec3 operator/(const fscalar &rhs) const
+    constexpr vec3 operator/(const fscalar &rhs) const
     {
         return vec3(this->x / rhs, this->y / rhs, this->z / rhs);
     }
-    T &operator[](std::size_t index)
+    constexpr T &operator[](std::size_t index)
     {
         return *(&x + index);
     }
-    const T &operator[](std::size_t index) const
+    constexpr const T &operator[](std::size_t index) const
     {
         return *(&x + index);
     }
@@ -82,7 +82,8 @@ template <typename T> class vec4
     T w;
     vec4() : x(0), y(0), z(0), w(0) {}
     vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
-    vec4(const vec3<T> & axis, T angle);
+    vec4(const vec3<T> &axis, T angle);
+    vec4(const vec3<T> &direction, const vec3<T> &up);
     vec4 operator+(const vec4 &rhs) const
     {
         return vec4(this->x + rhs.x,
@@ -122,6 +123,7 @@ using fvec3 = vec3<float>;
 using fvec4 = vec4<float>;
 
 using i16vec2 = vec2<int16_t>;
+using i16vec3 = vec3<int16_t>;
 using i16vec4 = vec4<int16_t>;
 using u16vec2 = vec2<uint16_t>;
 using u8vec4 = vec4<uint8_t>;
@@ -158,6 +160,7 @@ template <typename T> class mat3
         return indices[index];
     }
     bool operator==(const mat3<T> &rhs) const;
+    operator vec4<T>() const;
 };
 template <typename T> class mat4
 {
@@ -260,10 +263,17 @@ class transform3
     fvec3 translation;
     fvec4 rotation;
     fvec3 scale;
-    transform3(fvec3 _translation = fvec3(0, 0, 0),
-               fvec4 _rotation = fvec4(0, 0, 0, 1),
-               fvec3 _scale = fvec3(1, 1, 1))
+    transform3()
+        : translation(fvec3(0, 0, 0)), rotation(fvec4(0, 0, 0, 1)),
+          scale(fvec3(1, 1, 1))
+    {
+    }
+    transform3(fvec3 _translation, fvec4 _rotation, fvec3 _scale)
         : translation(_translation), rotation(_rotation), scale(_scale)
+    {
+    }
+    transform3(fvec3 _translation, fvec4 _rotation)
+        : translation(_translation), rotation(_rotation), scale(fvec3(1, 1, 1))
     {
     }
 };
@@ -330,5 +340,52 @@ class fmat4_transform3_inverse : public fmat4
                              const fmat4_rotation &rotation,
                              const fmat4_scale &scale);
 };
+
+class fmat4_view : fmat4_transform3_inverse
+{
+    using fmat4_transform3_inverse::fmat4_transform3_inverse;
+};
+
+class fmat4_projection : public fmat4
+{
+    using fmat4::fmat4;
+};
+
+#define fovx_to_fovy(fovx, aspect) 2.0 * atan(tan(0.5 * fovx) / aspect)
+#define fovy_to_fovx(fovy, aspect) 2.0 * atan(tan(0.5 * fovy) * aspect)
+class perspective
+{
+  public:
+    float aspect;
+    float fovx;
+    float fovy;
+    float near;
+    float far;
+    perspective(float fovx, float aspect);
+};
+class fmat4_perspective : public fmat4_projection
+{
+  public:
+    fmat4_perspective(float fovx, float aspect);
+    fmat4_perspective(const perspective &p);
+    fmat4_perspective(float f, const perspective &p);
+};
+
+class basis
+{
+  public:
+    fvec3 right;
+    fvec3 up;
+    fvec3 forward;
+    basis(const fvec3 &_forward, const fvec3 &_up);
+    operator fvec4() const;
+};
+
+constexpr fvec3 up = fvec3(0, 1, 0);
+constexpr fvec3 down = fvec3(0, -1, 0);
+constexpr fvec3 right = fvec3(1, 0, 0);
+constexpr fvec3 left = fvec3(-1, 0, 0);
+constexpr fvec3 forward = fvec3(0, 0, -1);
+constexpr fvec3 back = fvec3(0, 0, 1);
 
 }; // namespace vec

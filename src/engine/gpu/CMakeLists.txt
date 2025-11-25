@@ -1,3 +1,3 @@
-# target_sources(engine PRIVATE src/gpu.cpp)
+target_sources(engine PRIVATE src/gpu.cpp)
 target_include_directories(engine PUBLIC include)
-# add_subdirectory(test/gpu.base)
+add_subdirectory(test)

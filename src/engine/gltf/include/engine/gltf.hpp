@@ -151,6 +151,7 @@ class accessor
     void dump_uint16(std::vector<uint8_t> &out) const;
     void dump_fvec3(std::vector<uint8_t> &out) const;
     void dump_i16vec2(std::vector<uint8_t> &out) const;
+    void dump_i16vec3(std::vector<uint8_t> &out) const;
     void dump_i16vec4(std::vector<uint8_t> &out) const;
     void dump_u16vec2(std::vector<uint8_t> &out) const;
     void dump_u8vec4(std::vector<uint8_t> &out) const;

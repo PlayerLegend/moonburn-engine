@@ -60,6 +60,20 @@ class texture
     void bind(uint32_t unit);
 };
 
+class target
+{
+    uint32_t fbo = 0;
+    uint32_t color = 0;
+    uint32_t depth_stencil = 0;
+
+  public:
+    target(uint32_t width, uint32_t height);
+    target();
+    ~target();
+
+    void bind();
+};
+
 class gbuffer
 {
     uint32_t fbo = 0;
@@ -78,12 +92,13 @@ class gbuffer
 class skin
 {
     uint32_t id = 0;
-    uint32_t length = 0;
 
-    void allocate_texture(uint32_t length);
+    void allocate_texture(uint32_t bone_count);
     void free_texture();
 
   public:
+    uint32_t bone_count = 0;
+
     skin(uint32_t length);
     ~skin();
 
@@ -93,7 +108,7 @@ class skin
         set_pose(matrices);
     }
 
-    void bind(uint32_t unit);
+    void bind(uint32_t unit) const;
 };
 
 class mesh
@@ -148,16 +163,25 @@ class program
     uint32_t id = 0;
     int32_t u_skin = -1;
     int32_t u_skin_count = -1;
-    int32_t u_transform = -1;
-    int32_t u_normal_matrix = -1;
+    int32_t u_model = -1;
+    int32_t u_view = -1;
+    int32_t u_projection = -1;
+    int32_t u_normal = -1;
+    int32_t u_mvp = -1;
+
+    vec::fmat4 projection;
+    vec::fmat4 view;
+    vec::fmat4 model;
 
   public:
     program(const vertex *vertex_shader, const fragment *fragment_shader);
     ~program();
 
     void bind();
-    void set_skin(const std::vector<vec::fmat4> &matrices);
-    void set_transform(const vec::transform3 &transform);
+    void set_skin(const gpu::skin &skin);
+    void set_model_transform(const vec::transform3 &);
+    void set_view(const vec::transform3 &);
+    void set_perspective(const vec::perspective &);
 };
 
 } // namespace engine::gpu::shader
@@ -191,21 +215,21 @@ class light_point
                 float radius);
 };
 
-class camera
-{
-    std::array<vec::fvec3, 5> frustum_normal;
+// class camera
+// {
+//     std::array<vec::fvec3, 5> frustum_normal;
 
-  public:
-    vec::fvec3 position;
-    vec::fvec4 rotation;
-    float fov_y;
-    float aspect_ratio;
-    camera(const vec::fvec3 &position,
-           const vec::fvec4 &rotation,
-           float fov_y,
-           float aspect_ratio);
-    bool sphere_is_visible(const vec::fvec3 &center, float radius) const;
-};
+//   public:
+//     vec::fvec3 position;
+//     vec::fvec4 rotation;
+//     float fovx;
+//     float aspect_ratio;
+//     camera(const vec::fvec3 &position,
+//            const vec::fvec4 &rotation,
+//            float fovx,
+//            float aspect_ratio);
+//     bool sphere_is_visible(const vec::fvec3 &center, float radius) const;
+// };
 
 class queue
 {
@@ -221,8 +245,8 @@ class queue
     {
         lights.push_back(light);
     }
-    std::vector<actor> get_visible_actors(const camera &camera);
-    std::vector<light_point> get_visible_lights(const camera &camera);
+    // std::vector<actor> get_visible_actors(const camera &camera);
+    // std::vector<light_point> get_visible_lights(const camera &camera);
 };
 
 } // namespace engine::gpu::frame

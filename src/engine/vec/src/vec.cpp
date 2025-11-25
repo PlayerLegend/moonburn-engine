@@ -239,7 +239,7 @@ vec::fmat4_transform3_inverse::fmat4_transform3_inverse(
 {
 }
 
-vec::fmat4 transpose(const vec::fmat4 &m)
+vec::fmat4 vec::transpose(const vec::fmat4 &m)
 {
     vec::fmat4 result;
     for (int col = 0; col < 4; ++col)
@@ -252,7 +252,7 @@ vec::fmat4 transpose(const vec::fmat4 &m)
     return result;
 }
 
-vec::fmat3 transpose(const vec::fmat3 &m)
+vec::fmat3 vec::transpose(const vec::fmat3 &m)
 {
     vec::fmat3 result;
     for (int col = 0; col < 3; ++col)
@@ -322,4 +322,106 @@ template <> vec::vec4<float>::vec4(const vec::fvec3 &axis, float angle_rad)
     y = axis.y * s;
     z = axis.z * s;
     w = std::cos(half_angle);
+}
+
+#define fovx_to_fovy(fovx, aspect) 2.0 * atan(tan(0.5 * fovx) / aspect)
+#define fovy_to_fovx(fovy, aspect) 2.0 * atan(tan(0.5 * fovy) * aspect)
+
+vec::perspective::perspective(float _fovx, float _aspect)
+    : aspect(_aspect), fovx(_fovx), fovy(fovx_to_fovy(fovx, aspect)),
+      near(0.01), far(10000)
+{
+}
+
+vec::fmat4_perspective::fmat4_perspective(float fovx, float aspect)
+    : fmat4_perspective(perspective(fovx, aspect))
+{
+}
+
+vec::fmat4_perspective::fmat4_perspective(const perspective &p)
+    : vec::fmat4_perspective(1.0 / tan(p.fovy / 2), p)
+{
+}
+
+vec::fmat4_perspective::fmat4_perspective(float f,
+                                          const perspective &p)
+    : fmat4_projection( //
+          f / p.aspect,
+          0,
+          0,
+          0,
+          //
+          0,
+          f,
+          0,
+          0,
+          //
+          0,
+          0,
+          (p.near + p.far) / (p.near - p.far),
+          -1,
+          //
+          0,
+          0,
+          (2 * p.far * p.near) / (p.near - p.far),
+          0)
+{
+}
+
+vec::basis::basis(const fvec3 &_forward, const fvec3 &_up)
+{
+    forward = vec::normal(_forward);
+    right = vec::normal(vec::cross(_up, forward));
+    up = vec::cross(forward, right);
+}
+
+vec::basis::operator fvec4() const
+{
+    typedef float mat[3][3];
+    const mat *m = (mat *)this;
+
+    float trace = (*m)[0][0] + (*m)[1][1] + (*m)[2][2];
+
+    if (trace > epsilon)
+    {
+        float r = std::sqrt(1.0f + trace);
+        float s = 0.5f / r;
+        return fvec4(((*m)[2][1] - (*m)[1][2]) * s,
+                     ((*m)[0][2] - (*m)[2][0]) * s,
+                     ((*m)[1][0] - (*m)[0][1]) * s,
+                     0.5f * r);
+    }
+    else if ((*m)[0][0] > (*m)[1][1] && (*m)[0][0] > (*m)[2][2])
+    {
+        float r = std::sqrt(1.0f + (*m)[0][0] - (*m)[1][1] - (*m)[2][2]);
+        float s = 0.5f / r;
+        return fvec4(0.5f * r,
+                     ((*m)[0][1] + (*m)[1][0]) * s,
+                     ((*m)[2][0] + (*m)[0][2]) * s,
+                     ((*m)[2][1] - (*m)[1][2]) * s);
+    }
+    else if ((*m)[1][1] > (*m)[2][2])
+    {
+        float r = std::sqrt(1.0f + (*m)[1][1] - (*m)[0][0] - (*m)[2][2]);
+        float s = 0.5f / r;
+        return fvec4(((*m)[0][1] + (*m)[1][0]) * s,
+                     0.5f * r,
+                     ((*m)[1][2] + (*m)[2][1]) * s,
+                     ((*m)[0][2] - (*m)[2][0]) * s);
+    }
+    else
+    {
+        float r = std::sqrt(1.0f + (*m)[2][2] - (*m)[0][0] - (*m)[1][1]);
+        float s = 0.5f / r;
+        return fvec4(((*m)[2][0] + (*m)[0][2]) * s,
+                     ((*m)[1][2] + (*m)[2][1]) * s,
+                     0.5f * r,
+                     ((*m)[1][0] - (*m)[0][1]) * s);
+    }
+}
+
+template <> vec::vec4<float>::vec4(const vec::fvec3 &direction,
+                                   const vec::fvec3 &up)
+    : vec4(static_cast<vec::fvec4>(vec::basis(direction, up)))
+{
 }
