@@ -12,8 +12,8 @@
 #define UNIFORM_NAME_VIEW_MAT4 "u_view"
 #define UNIFORM_NAME_PROJECTION_MAT4 "u_projection"
 #define UNIFORM_NAME_NORMAL_MAT3 "u_normal"
-#define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_mat_albedo_tex"
 #define UNIFORM_NAME_MVP_MAT4 "u_mvp"
+#define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_albedo_tex"
 
 #define gl_check_error()                                                       \
     {                                                                          \
@@ -137,6 +137,7 @@ engine::gpu::primitive::primitive(const class gltf::mesh_primitive &input)
                     attribute.normalized,
                     0,
                     (void *)vertex_data.size());
+            gl_call(glEnableVertexAttribArray, attribute.index);
         }
         else
         {
@@ -146,6 +147,7 @@ engine::gpu::primitive::primitive(const class gltf::mesh_primitive &input)
                     (GLenum)attribute.component_type,
                     0,
                     (void *)vertex_data.size());
+            gl_call(glEnableVertexAttribArray, attribute.index);
         }
         attribute.accessor->dump(vertex_data,
                                  attribute.component_type,
@@ -224,6 +226,15 @@ engine::gpu::mesh::mesh(const class gltf::mesh &mesh) : radius(0)
     for (const gpu::primitive &primitive : primitives)
         if (radius < primitive.radius)
             radius = primitive.radius;
+}
+
+void engine::gpu::mesh::draw()
+{
+    for (engine::gpu::primitive &prim : primitives)
+    {
+        prim.bind();
+        prim.draw();
+    }
 }
 
 engine::gpu::texture::texture(const gltf::texture &texture)
@@ -610,12 +621,27 @@ engine::gpu::shader::program::program(const vertex *vertex_shader,
                                            std::string(log, log_length));
     }
 
-    u_skin = glGetUniformLocation(id, UNIFORM_NAME_SKIN);
-    u_skin_count = glGetUniformLocation(id, UNIFORM_NAME_SKIN_COUNT);
-    u_model = glGetUniformLocation(id, UNIFORM_NAME_MODEL_MAT4);
+    if ((u_skin = glGetUniformLocation(id, UNIFORM_NAME_SKIN)) < 0)
+        std::cerr << "No skin uniform\n";
 
-    u_view = glGetUniformLocation(id, UNIFORM_NAME_VIEW_MAT4);
-    u_normal = glGetUniformLocation(id, UNIFORM_NAME_NORMAL_MAT3);
+    if ((u_skin_count = glGetUniformLocation(id, UNIFORM_NAME_SKIN_COUNT)) < 0)
+        std::cerr << "No skin count uniform\n";
+
+    if ((u_model = glGetUniformLocation(id, UNIFORM_NAME_MODEL_MAT4)) < 0)
+        std::cerr << "No model uniform\n";
+
+    if ((u_view = glGetUniformLocation(id, UNIFORM_NAME_VIEW_MAT4)) < 0)
+        std::cerr << "No view matrix uniform\n";
+
+    if ((u_normal = glGetUniformLocation(id, UNIFORM_NAME_NORMAL_MAT3)) < 0)
+        std::cerr << "No normal matrix uniform\n";
+
+    if ((u_projection =
+             glGetUniformLocation(id, UNIFORM_NAME_PROJECTION_MAT4)) < 0)
+        std::cerr << "No projection matrix uniform\n";
+
+    if ((u_mvp = glGetUniformLocation(id, UNIFORM_NAME_MVP_MAT4)) < 0)
+        std::cerr << "No model-view-projection matrix uniform\n";
 }
 
 engine::gpu::shader::program::~program()
@@ -639,6 +665,12 @@ void engine::gpu::shader::program::set_skin(const engine::gpu::skin &skin)
         gl_call(glUniform1i, u_skin_count, skin.bone_count);
 }
 
+void engine::gpu::shader::program::set_no_skin()
+{
+    if (u_skin_count != -1)
+        gl_call(glUniform1i, u_skin_count, 0);
+}
+
 void engine::gpu::shader::program::set_model_transform(
     const vec::transform3 &transform)
 {
@@ -654,7 +686,7 @@ void engine::gpu::shader::program::set_model_transform(
 
     if (u_mvp != -1)
     {
-        vec::fmat4 mvp = projection * view * model;
+        vec::fmat4 mvp = view_projection * model;
         gl_call(glUniformMatrix4fv, u_mvp, 1, GL_FALSE, (const GLfloat *)&mvp);
     }
 
@@ -672,9 +704,9 @@ void engine::gpu::shader::program::set_model_transform(
 
 void engine::gpu::shader::program::set_view(const vec::transform3 &transform)
 {
+    view = vec::fmat4_transform3_inverse(transform);
     if (u_view != -1)
     {
-        view = vec::fmat4_transform3_inverse(transform);
         gl_call(glUniformMatrix4fv,
                 u_view,
                 1,
@@ -685,15 +717,24 @@ void engine::gpu::shader::program::set_view(const vec::transform3 &transform)
 
 void engine::gpu::shader::program::set_perspective(const vec::perspective &p)
 {
+    projection = vec::fmat4_perspective(p.fovy, p.aspect);
     if (u_projection != -1)
     {
-        projection = vec::fmat4_perspective(p.fovy, p.aspect);
         gl_call(glUniformMatrix4fv,
                 u_projection,
                 1,
                 GL_FALSE,
                 (const GLfloat *)&projection);
     }
+}
+
+void engine::gpu::shader::program::set_view_perspective(
+    const vec::transform3 &v,
+    const vec::perspective &p)
+{
+    set_view(v);
+    set_perspective(p);
+    view_projection = projection * view;
 }
 
 void engine::gpu::skin::allocate_texture(uint32_t bone_count)
@@ -754,7 +795,7 @@ void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
             0,
             0,
             0,
-            bone_count * 4,
+            matrices.size() * 4,
             1,
             GL_RGBA,
             GL_FLOAT,

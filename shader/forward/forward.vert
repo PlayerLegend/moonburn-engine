@@ -8,7 +8,7 @@ layout(location = 4) in uvec4 attribute_joints;
 layout(location = 5) in vec4 attribute_weights;
 
 uniform mat4 u_mvp;
-uniform mat3 u_matrix_m_normal;
+uniform mat3 u_normal;
 
 uniform mat4 u_model;
 uniform mat4 u_view;
@@ -18,7 +18,6 @@ uniform vec3 u_world_viewpos;
 uniform vec3 u_world_lightpos;
 uniform sampler2D u_skin;
 uniform int u_skin_count;
-uniform bool u_has_skin;
 
 mat4 get_skin_matrix(uint index)
 {
@@ -44,8 +43,8 @@ out vs_out
 
 mat3 tbn_matrix()
 {
-    vec3 tbn_t = normalize(u_matrix_m_normal * attribute_tangent.xyz);
-    vec3 tbn_n = normalize(u_matrix_m_normal * attribute_normal);
+    vec3 tbn_t = normalize(u_normal * attribute_tangent.xyz);
+    vec3 tbn_n = normalize(u_normal * attribute_normal);
     tbn_t = normalize(tbn_t - dot(tbn_t, tbn_n) * tbn_n);
     vec3 tbn_b = normalize(cross(tbn_n, tbn_t) * attribute_tangent.w);
 
@@ -62,7 +61,7 @@ vec3 skin_position_part(int i)
 
 vec3 skin_position()
 {
-    if (u_has_skin)
+    if (u_skin_count > 0)
         return skin_position_part(0) + skin_position_part(1) +
                skin_position_part(2) + skin_position_part(3);
     else

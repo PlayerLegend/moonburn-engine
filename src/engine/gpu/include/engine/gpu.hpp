@@ -118,6 +118,7 @@ class mesh
   public:
     float radius;
     mesh(const class gltf::mesh &mesh);
+    void draw();
 };
 
 } // namespace engine::gpu
@@ -172,6 +173,9 @@ class program
     vec::fmat4 projection;
     vec::fmat4 view;
     vec::fmat4 model;
+    vec::fmat4 view_projection;
+    void set_view(const vec::transform3 &);
+    void set_perspective(const vec::perspective &);
 
   public:
     program(const vertex *vertex_shader, const fragment *fragment_shader);
@@ -179,9 +183,9 @@ class program
 
     void bind();
     void set_skin(const gpu::skin &skin);
+    void set_no_skin();
     void set_model_transform(const vec::transform3 &);
-    void set_view(const vec::transform3 &);
-    void set_perspective(const vec::perspective &);
+    void set_view_perspective(const vec::transform3 &, const vec::perspective &);
 };
 
 } // namespace engine::gpu::shader

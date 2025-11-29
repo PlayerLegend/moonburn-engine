@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
         std::string(vs_alloc.begin(), vs_alloc.end()));
     engine::gpu::shader::fragment fragment_shader(
         std::string(fs_alloc.begin(), fs_alloc.end()));
+    engine::gpu::shader::program shader_program(&vertex_shader,
+                                                &fragment_shader);
     engine::gpu::mesh mesh(doc.get_mesh(0));
     engine::gpu::target screen;
 
@@ -46,5 +48,11 @@ int main(int argc, char *argv[])
         vec::transform3 camera_transform(
             vec::fvec3(0, 0, 5),
             vec::fvec4(vec::fvec3(0, 0, 0), vec::up));
+        shader_program.bind();
+        shader_program.set_no_skin();
+        shader_program.set_view_perspective(camera_transform, perspective);
+        shader_program.set_model_transform(vec::transform3());
+
+        mesh.draw();
     }
 }
