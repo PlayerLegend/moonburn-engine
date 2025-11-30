@@ -23,10 +23,7 @@ int main(int argc, char *argv[])
     engine::filesystem::cache_binary fs_bin(wl);
 
     engine::image::cache::rgba32 fs_img(wl);
-    gltf::gltf_cache cache(wl, fs_bin, fs_img);
-    gltf::gltf_cache::reference ref = cache[glb_path];
-    assert(ref);
-    const gltf::gltf &doc = *ref;
+    gltf::gltf_cache fs_gltf(wl, fs_bin, fs_img);
 
     platform::window window("gpu test");
 
@@ -36,8 +33,10 @@ int main(int argc, char *argv[])
         std::string(fs_alloc.begin(), fs_alloc.end()));
     engine::gpu::shader::program shader_program(&vertex_shader,
                                                 &fragment_shader);
-    engine::gpu::mesh mesh(doc.get_mesh(0));
-    engine::gpu::target screen;
+    engine::gpu::cache::asset fs_gpu(wl, fs_gltf);
+
+    engine::gpu::cache::asset::reference ref = fs_gpu[glb_path];
+    const engine::gpu::asset &gpu_asset = *ref;
 
     while (true)
     {
@@ -48,11 +47,15 @@ int main(int argc, char *argv[])
         vec::transform3 camera_transform(
             vec::fvec3(0, 0, 5),
             vec::fvec4(vec::fvec3(0, 0, 0), vec::up));
+
+        vec::transform3 model_transform(
+            vec::fvec3(0, 0, 0),
+            vec::fvec4(vec::fvec3(0, 1, 0), frame.time.now));
+
         shader_program.bind();
         shader_program.set_no_skin();
         shader_program.set_view_perspective(camera_transform, perspective);
-        shader_program.set_model_transform(vec::transform3());
-
-        mesh.draw();
+        shader_program.set_model_transform(model_transform);
+        gpu_asset.draw("Cube.001", shader_program);
     }
 }

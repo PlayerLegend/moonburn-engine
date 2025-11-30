@@ -1,21 +1,30 @@
 #pragma once
 
 #include <engine/exception.hpp>
+#include <engine/filesystem.hpp>
+#include <engine/gltf.hpp>
 #include <engine/image.hpp>
 #include <engine/vec.hpp>
+#include <optional>
 #include <stdint.h>
-#include <vector>
+#include <string>
+#include <unordered_map>
+#include <variant>
 
 namespace gltf
 {
 class mesh_primitive;
 class texture;
 class mesh;
+class material;
+class gltf;
 } // namespace gltf
 
 namespace skel
 {
 class pose;
+class armature;
+class animation;
 } // namespace skel
 
 namespace engine::gpu::attributes
@@ -30,34 +39,81 @@ using weights = vec::vec4<uint8_t>;
 using index = uint32_t;
 } // namespace engine::gpu::attributes
 
+namespace engine::gpu::shader
+{
+class program;
+}
 namespace engine::gpu
 {
-class primitive
+class asset
 {
-    uint32_t vao = 0;
-    uint32_t vbo = 0;
-    uint32_t ibo = 0;
-    uint32_t count = 0;
-    bool short_indices = false;
-
   public:
-    float radius = 0;
-    primitive(const class gltf::mesh_primitive &primitive);
-    ~primitive();
+    class texture
+    {
+        uint32_t id = 0;
 
-    void draw();
-    void bind();
-};
+      public:
+        texture(const gltf::texture &texture);
+        ~texture();
+        void bind(uint32_t unit);
+    };
 
-class texture
-{
-    uint32_t id = 0;
+    class material
+    {
+      public:
+        const texture *normal_texture;
+        const texture *occlusion_texture;
+        const texture *emissive_texture;
+        const texture *base_color_texture;
+        const texture *metallic_roughness_texture;
+        vec::fvec4 base_color_factor = vec::fvec4(1, 1, 1, 1);
+        vec::fvec3 emissive_factor = vec::fvec3(0, 0, 0);
+        float metallic = 1;
+        float roughness = 1;
+        bool double_sided = false;
+        float alpha_cutoff = 0.5;
+        material(const engine::gpu::asset &, const gltf::material &);
+    };
 
-  public:
-    texture(const gltf::texture &texture);
+    class primitive
+    {
+        uint32_t vao = 0;
+        uint32_t vbo = 0;
+        uint32_t ibo = 0;
+        uint32_t count = 0;
+        bool short_indices = false;
 
-    ~texture();
-    void bind(uint32_t unit);
+        const class material &material;
+
+      public:
+        float radius = 0;
+        primitive(const gpu::asset::material &,
+                  const class gltf::mesh_primitive &);
+        ~primitive();
+
+        void draw() const;
+        void bind() const;
+    };
+
+    class mesh
+    {
+        std::vector<primitive> primitives;
+
+      public:
+        float radius;
+        mesh(const asset &, const class gltf::mesh &);
+        void draw(const engine::gpu::shader::program &) const;
+    };
+
+    std::unordered_map<std::string, texture> textures;
+    std::unordered_map<std::string, material> materials;
+    std::unordered_map<std::string, mesh> meshes;
+
+    asset(const gltf::gltf &gltf);
+    asset(const std::string &path, gltf::gltf_cache &cache);
+
+    void draw(const std::string &mesh_name,
+              const engine::gpu::shader::program &) const;
 };
 
 class target
@@ -111,17 +167,32 @@ class skin
     void bind(uint32_t unit) const;
 };
 
-class mesh
+} // namespace engine::gpu
+
+namespace engine::gpu::cache
 {
-    std::vector<primitive> primitives;
+class asset : public filesystem::cache<engine::gpu::asset, gltf::gltf_cache &>
+{
+    gltf::gltf_cache &fs_gltf;
+
+  protected:
+    reference load(const std::string &path,
+                   std::filesystem::file_time_type mtime) override
+    {
+        return std::make_shared<engine::gpu::cache::asset::file>(path,
+                                                                 mtime,
+                                                                 fs_gltf);
+    }
+    std::filesystem::file_time_type get_mtime(const std::string &path) override;
 
   public:
-    float radius;
-    mesh(const class gltf::mesh &mesh);
-    void draw();
+    asset(class engine::filesystem::whitelist &wl, gltf::gltf_cache &_fs_gltf)
+        : engine::filesystem::cache<engine::gpu::asset, gltf::gltf_cache &>(wl),
+          fs_gltf(_fs_gltf)
+    {
+    }
 };
-
-} // namespace engine::gpu
+} // namespace engine::gpu::cache
 
 namespace engine::gpu::exception
 {
@@ -185,7 +256,8 @@ class program
     void set_skin(const gpu::skin &skin);
     void set_no_skin();
     void set_model_transform(const vec::transform3 &);
-    void set_view_perspective(const vec::transform3 &, const vec::perspective &);
+    void set_view_perspective(const vec::transform3 &,
+                              const vec::perspective &);
 };
 
 } // namespace engine::gpu::shader
@@ -195,11 +267,11 @@ namespace engine::gpu::frame
 class actor
 {
   public:
-    engine::gpu::mesh &mesh;
+    engine::gpu::asset::mesh &mesh;
     skel::pose &pose;
     vec::transform3 transform;
 
-    actor(engine::gpu::mesh &mesh,
+    actor(engine::gpu::asset::mesh &mesh,
           skel::pose &pose,
           const vec::transform3 &transform)
         : mesh(mesh), pose(pose), transform(transform)

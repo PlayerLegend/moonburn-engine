@@ -34,7 +34,91 @@
                 " after calling function " #name);                             \
     }
 
-engine::gpu::primitive::primitive(const class gltf::mesh_primitive &input)
+engine::gpu::asset::asset(const gltf::gltf &in)
+{
+    for (const gltf::texture &in_tex : in.textures)
+        if (!in_tex.name.empty())
+            textures.emplace(in_tex.name, in_tex);
+
+    for (const gltf::material &in_material : in.materials)
+        if (!in_material.name.empty())
+            materials.emplace(in_material.name,
+                              engine::gpu::asset::material(*this, in_material));
+
+    for (const gltf::mesh &in_mesh : in.meshes)
+        if (!in_mesh.name.empty())
+            meshes.emplace(in_mesh.name,
+                           engine::gpu::asset::mesh(*this, in_mesh));
+}
+
+engine::gpu::asset::asset(const std::string &path, gltf::gltf_cache &cache) 
+    : engine::gpu::asset::asset(*cache[path])
+{
+    
+}
+
+void engine::gpu::asset::draw(const std::string &mesh_name,
+                              const engine::gpu::shader::program &program) const
+{
+    auto it = meshes.find(mesh_name);
+
+    if (it == meshes.end())
+        return;
+
+    it->second.draw(program);
+}
+
+engine::gpu::asset::material::material(const engine::gpu::asset &parent,
+                                       const gltf::material &in)
+{
+#define lookup_tex(tname)                                                      \
+    if (in.tname)                                                              \
+    {                                                                          \
+        auto it = parent.textures.find(in.tname->texture.name);                \
+        if (it != parent.textures.end())                                       \
+            tname = &it->second;                                               \
+    }
+
+    lookup_tex(normal_texture);
+    lookup_tex(occlusion_texture);
+    lookup_tex(emissive_texture);
+
+#undef lookup_tex
+
+    if (in.pbr_metallic_roughness)
+    {
+        const gltf::pbr_metallic_roughness &pbr = *in.pbr_metallic_roughness;
+
+        if (pbr.metallic_roughness_texture.has_value())
+        {
+            const std::string &in_name =
+                pbr.metallic_roughness_texture->texture.name;
+            auto it = parent.textures.find(in_name);
+            if (it != parent.textures.end())
+                metallic_roughness_texture = &it->second;
+        }
+
+        if (pbr.base_color_texture.has_value())
+        {
+            const std::string &in_name = pbr.base_color_texture->texture.name;
+            auto it = parent.textures.find(in_name);
+            if (it != parent.textures.end())
+                base_color_texture = &it->second;
+        }
+        base_color_factor = pbr.base_color_factor;
+        metallic = pbr.metallic_factor;
+        roughness = pbr.roughness_factor;
+    }
+
+    emissive_factor = in.emissive_factor;
+    double_sided = in.double_sided;
+    alpha_cutoff = in.alpha_cutoff;
+}
+
+engine::gpu::asset::primitive::primitive(
+    const gpu::asset::material &_material,
+    const class gltf::mesh_primitive &input)
+    : material(_material)
 {
     gl_check_error();
 
@@ -173,7 +257,7 @@ engine::gpu::primitive::primitive(const class gltf::mesh_primitive &input)
     }
 }
 
-engine::gpu::primitive::~primitive()
+engine::gpu::asset::primitive::~primitive()
 {
     if (ibo)
         glDeleteBuffers(1, &ibo);
@@ -183,7 +267,7 @@ engine::gpu::primitive::~primitive()
         glDeleteVertexArrays(1, &vao);
 }
 
-void engine::gpu::primitive::bind()
+void engine::gpu::asset::primitive::bind() const
 {
     gl_call(glBindVertexArray, vao);
     gl_call(glBindBuffer, GL_ARRAY_BUFFER, vbo);
@@ -191,7 +275,7 @@ void engine::gpu::primitive::bind()
         gl_call(glBindBuffer, GL_ELEMENT_ARRAY_BUFFER, ibo);
 }
 
-void engine::gpu::primitive::draw()
+void engine::gpu::asset::primitive::draw() const
 {
     if (ibo)
     {
@@ -218,26 +302,38 @@ void engine::gpu::primitive::draw()
     }
 }
 
-engine::gpu::mesh::mesh(const class gltf::mesh &mesh) : radius(0)
+engine::gpu::asset::mesh::mesh(const engine::gpu::asset &parent,
+                               const class gltf::mesh &in_mesh)
+    : radius(0)
 {
-    for (const gltf::mesh_primitive &primitive : mesh.primitives)
-        primitives.emplace_back(primitive);
-
-    for (const gpu::primitive &primitive : primitives)
+    for (const gltf::mesh_primitive &in_primitive : in_mesh.primitives)
+    {
+        if (!in_primitive.material)
+            continue;
+        const std::string &in_name = in_primitive.material->name;
+        if (in_name.empty())
+            continue;
+        auto it = parent.materials.find(in_name);
+        if (it == parent.materials.end())
+            continue;
+        primitives.emplace_back(it->second, in_primitive);
+    }
+    for (const engine::gpu::asset::primitive &primitive : primitives)
         if (radius < primitive.radius)
             radius = primitive.radius;
 }
 
-void engine::gpu::mesh::draw()
+void engine::gpu::asset::mesh::draw(
+    const engine::gpu::shader::program &in_shader) const
 {
-    for (engine::gpu::primitive &prim : primitives)
+    for (const engine::gpu::asset::primitive &prim : primitives)
     {
         prim.bind();
         prim.draw();
     }
 }
 
-engine::gpu::texture::texture(const gltf::texture &texture)
+engine::gpu::asset::texture::texture(const gltf::texture &texture)
 {
     gl_check_error();
 
@@ -279,13 +375,13 @@ engine::gpu::texture::texture(const gltf::texture &texture)
     gl_call(glBindTexture, GL_TEXTURE_2D, 0);
 }
 
-engine::gpu::texture::~texture()
+engine::gpu::asset::texture::~texture()
 {
     if (id)
         glDeleteTextures(1, &id);
 }
 
-void engine::gpu::texture::bind(uint32_t unit)
+void engine::gpu::asset::texture::bind(uint32_t unit)
 {
     gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
@@ -817,6 +913,12 @@ engine::gpu::frame::light_point::light_point(const vec::fvec3 &position,
     intensity = threshold_intensity * radius * radius;
 }
 
+std::filesystem::file_time_type
+engine::gpu::cache::asset::get_mtime(const std::string &path)
+{
+    return std::filesystem::last_write_time(path);
+}
+
 // #define fovx_to_fovy(fovx, aspect) 2.0 * atan(tan(0.5 * fovx) / aspect)
 // engine::gpu::frame::camera::camera(const vec::fvec3 &position,
 //                                    const vec::fvec4 &rotation,
@@ -845,7 +947,8 @@ engine::gpu::frame::light_point::light_point(const vec::fvec3 &position,
 //         rotation * vec::fvec3(0, -plane_normal_up.y, plane_normal_up.z);
 // }
 
-// bool engine::gpu::frame::camera::sphere_is_visible(const vec::fvec3 &center,
+// bool engine::gpu::frame::camera::sphere_is_visible(const vec::fvec3
+// &center,
 //                                                    float radius) const
 // {
 //     vec::fvec3 to_sphere = center - position;

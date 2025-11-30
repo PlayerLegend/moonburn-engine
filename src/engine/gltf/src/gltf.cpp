@@ -552,6 +552,10 @@ gltf::mesh_primitive::mesh_primitive(const json::object &root, const gltf &gltf)
         for (const json::object &target : targets_array)
             targets.push_back(::gltf::mesh_primitive::target(target, gltf));
     }
+
+    json::object::const_iterator it = root.find("material");
+    if (it != root.end())
+        material = &gltf.get_material(it->second.strict_int());
 }
 
 gltf::mesh::mesh(const json::object &root, const gltf &gltf)

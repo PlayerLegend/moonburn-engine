@@ -322,6 +322,7 @@ class mesh_primitive
     const accessor *indices = NULL;
     mode mode;
     std::vector<target> targets;
+    const ::gltf::material *material = NULL;
     mesh_primitive(const json::object &root, const gltf &gltf);
 };
 class mesh
@@ -556,12 +557,10 @@ class gltf_cache
     engine::image::cache::rgba32 &fs_img;
 
   protected:
-    reference load(const std::string &path, std::filesystem::file_time_type mtime) override
+    reference load(const std::string &path,
+                   std::filesystem::file_time_type mtime) override
     {
-        return std::make_shared<gltf_cache::file>(path,
-                                                  mtime,
-                                                  fs_bin,
-                                                  fs_img);
+        return std::make_shared<gltf_cache::file>(path, mtime, fs_bin, fs_img);
     }
 
     std::filesystem::file_time_type get_mtime(const std::string &path) override
