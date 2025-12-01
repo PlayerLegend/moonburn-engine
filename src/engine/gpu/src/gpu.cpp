@@ -162,7 +162,7 @@ engine::gpu::asset::primitive::primitive(
          {.accessor = input.attributes.texcoord_0,
           .index = 3,
           .normalized = true,
-          .component_type = gltf::component_type::USHORT,
+          .component_type = gltf::component_type::FLOAT,
           .attribute_type = gltf::attribute_type::VEC2},
          {.accessor = input.attributes.joints,
           .index = 4,
