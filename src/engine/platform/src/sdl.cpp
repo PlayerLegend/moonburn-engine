@@ -75,6 +75,8 @@ class window
             std::cout << "Failed to initialize GLAD" << std::endl;
             exit(1);
         }
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     ~window()

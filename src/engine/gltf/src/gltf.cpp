@@ -397,6 +397,8 @@ gltf::texture::texture(const json::object &root, const gltf &gltf)
       source(gltf.get_image(root.at("source").strict_int())),
       sampler(gltf.get_sampler(root.at("sampler").strict_int()))
 {
+    if (name.empty())
+        name = source.name;
 }
 
 gltf::texture_info::texture_info(const json::object &root, const gltf &gltf)
@@ -1300,6 +1302,21 @@ void gltf::accessor::dump_fvec3(std::vector<uint8_t> &output) const
     }
 }
 
+void gltf::accessor::dump_fvec2(std::vector<uint8_t> &output) const
+{
+    if (type != ::gltf::attribute_type::VEC2)
+        throw exception::parse_error(
+            "Accessor type is not VEC2, cannot dump to fvec2");
+
+    output.reserve(output.size() + count * 3 * sizeof(float));
+    for (size_t i = 0; i < count; i++)
+    {
+        append_type<vec::fvec2>(output,
+                                vec::fvec2(get_component_as_float(i, 0),
+                                           get_component_as_float(i, 1)));
+    }
+}
+
 void gltf::accessor::dump_i16vec3(std::vector<uint8_t> &output) const
 {
     if (type != ::gltf::attribute_type::VEC3)
@@ -1358,6 +1375,7 @@ void gltf::accessor::dump_u16vec2(std::vector<uint8_t> &output) const
             "Accessor type is not VEC2, cannot dump to u16vec2");
 
     output.reserve(output.size() + count * 2 * sizeof(uint16_t));
+
     for (size_t i = 0; i < count; i++)
     {
         append_type<vec::u16vec2>(
@@ -1440,6 +1458,11 @@ void gltf::accessor::dump(std::vector<uint8_t> &output,
         if (target_component_type == component_type::USHORT)
         {
             dump_u16vec2(output);
+            return;
+        }
+        if (target_component_type == component_type::FLOAT)
+        {
+            dump_fvec2(output);
             return;
         }
         throw exception::parse_error(

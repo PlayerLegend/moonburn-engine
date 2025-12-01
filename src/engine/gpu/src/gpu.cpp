@@ -13,7 +13,9 @@
 #define UNIFORM_NAME_PROJECTION_MAT4 "u_projection"
 #define UNIFORM_NAME_NORMAL_MAT3 "u_normal"
 #define UNIFORM_NAME_MVP_MAT4 "u_mvp"
-#define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_albedo_tex"
+#define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_tex_color"
+
+#define COLOR_TEXTURE_UNIT 0
 
 #define gl_check_error()                                                       \
     {                                                                          \
@@ -29,16 +31,20 @@
         name(__VA_ARGS__);                                                     \
                                                                                \
         if (GL_NO_ERROR != (error = glGetError()))                             \
+        {                                                                      \
+            std::cerr << "GL error: " + std::to_string(error) + "\n";          \
             throw engine::gpu::exception::base(                                \
                 "GL error " + std::to_string(error) +                          \
                 " after calling function " #name);                             \
+        }                                                                      \
     }
 
 engine::gpu::asset::asset(const gltf::gltf &in)
 {
     for (const gltf::texture &in_tex : in.textures)
-        if (!in_tex.name.empty())
-            textures.emplace(in_tex.name, in_tex);
+    {
+        textures.emplace(in_tex.name, in_tex);
+    }
 
     for (const gltf::material &in_material : in.materials)
         if (!in_material.name.empty())
@@ -51,14 +57,13 @@ engine::gpu::asset::asset(const gltf::gltf &in)
                            engine::gpu::asset::mesh(*this, in_mesh));
 }
 
-engine::gpu::asset::asset(const std::string &path, gltf::gltf_cache &cache) 
+engine::gpu::asset::asset(const std::string &path, gltf::gltf_cache &cache)
     : engine::gpu::asset::asset(*cache[path])
 {
-    
 }
 
 void engine::gpu::asset::draw(const std::string &mesh_name,
-                              const engine::gpu::shader::program &program) const
+                              engine::gpu::shader::program &program) const
 {
     auto it = meshes.find(mesh_name);
 
@@ -113,6 +118,13 @@ engine::gpu::asset::material::material(const engine::gpu::asset &parent,
     emissive_factor = in.emissive_factor;
     double_sided = in.double_sided;
     alpha_cutoff = in.alpha_cutoff;
+}
+
+void engine::gpu::asset::material::use(
+    engine::gpu::shader::program &program) const
+{
+    if (base_color_texture)
+        program.set_albedo_texture(*base_color_texture);
 }
 
 engine::gpu::asset::primitive::primitive(
@@ -212,7 +224,8 @@ engine::gpu::asset::primitive::primitive(
         if (!attribute.accessor)
             continue;
 
-        if (attribute.accessor->component_type == gltf::component_type::FLOAT)
+        if (attribute.accessor->component_type == gltf::component_type::FLOAT ||
+            attribute.normalized)
         {
             gl_call(glVertexAttribPointer,
                     attribute.index,
@@ -255,6 +268,16 @@ engine::gpu::asset::primitive::primitive(
         if (radius < length)
             radius = length;
     }
+}
+
+engine::gpu::asset::primitive::primitive(primitive &&other) noexcept
+    : vao(other.vao), vbo(other.vbo), ibo(other.ibo), count(other.count),
+      short_indices(other.short_indices), material(other.material)
+{
+    other.vao = 0;
+    other.vbo = 0;
+    other.ibo = 0;
+    other.count = 0;
 }
 
 engine::gpu::asset::primitive::~primitive()
@@ -323,11 +346,17 @@ engine::gpu::asset::mesh::mesh(const engine::gpu::asset &parent,
             radius = primitive.radius;
 }
 
+engine::gpu::asset::mesh::mesh(mesh &&other) noexcept
+{
+    radius = other.radius;
+    primitives = std::move(other.primitives);
+}
 void engine::gpu::asset::mesh::draw(
-    const engine::gpu::shader::program &in_shader) const
+    engine::gpu::shader::program &in_shader) const
 {
     for (const engine::gpu::asset::primitive &prim : primitives)
     {
+        prim.material.use(in_shader);
         prim.bind();
         prim.draw();
     }
@@ -338,6 +367,8 @@ engine::gpu::asset::texture::texture(const gltf::texture &texture)
     gl_check_error();
 
     gl_call(glGenTextures, 1, &id);
+    if (!id)
+        throw gpu::exception::base("Could not create texture");
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
 
     gl_call(glTexParameteri,
@@ -373,7 +404,29 @@ engine::gpu::asset::texture::texture(const gltf::texture &texture)
     gl_call(glGenerateMipmap, GL_TEXTURE_2D);
 
     gl_call(glBindTexture, GL_TEXTURE_2D, 0);
+
+    assert(glIsTexture(id));
+
+    std::cerr << "Created texture id " << id << std::endl;
 }
+
+engine::gpu::asset::texture::texture(texture &&other) noexcept : id(other.id)
+{
+    other.id = 0;
+}
+
+// engine::gpu::asset::texture& engine::gpu::asset::texture::operator=(texture&&
+// other) noexcept
+// {
+//     if (this != &other)
+//     {
+//         if (id)
+//             glDeleteTextures(1, &id);
+//         id = other.id;
+//         other.id = 0;
+//     }
+//     return *this;
+// }
 
 engine::gpu::asset::texture::~texture()
 {
@@ -381,8 +434,10 @@ engine::gpu::asset::texture::~texture()
         glDeleteTextures(1, &id);
 }
 
-void engine::gpu::asset::texture::bind(uint32_t unit)
+void engine::gpu::asset::texture::bind(uint32_t unit) const
 {
+    gl_check_error();
+    assert(glIsTexture(id));
     gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
 }
@@ -738,6 +793,10 @@ engine::gpu::shader::program::program(const vertex *vertex_shader,
 
     if ((u_mvp = glGetUniformLocation(id, UNIFORM_NAME_MVP_MAT4)) < 0)
         std::cerr << "No model-view-projection matrix uniform\n";
+
+    if ((u_albedo_tex =
+             glGetUniformLocation(id, UNIFORM_NAME_MATERIAL_ALBEDO_TEX)) < 0)
+        std::cerr << "No albedo texture uniform\n";
 }
 
 engine::gpu::shader::program::~program()
@@ -759,6 +818,16 @@ void engine::gpu::shader::program::set_skin(const engine::gpu::skin &skin)
         gl_call(glUniform1i, u_skin, skin_unit);
     if (u_skin_count != -1)
         gl_call(glUniform1i, u_skin_count, skin.bone_count);
+}
+
+void engine::gpu::shader::program::set_albedo_texture(
+    const asset::texture &tex) const
+{
+    if (u_albedo_tex != -1)
+    {
+        tex.bind(COLOR_TEXTURE_UNIT);
+        gl_call(glUniform1i, u_albedo_tex, (GLint)COLOR_TEXTURE_UNIT);
+    }
 }
 
 void engine::gpu::shader::program::set_no_skin()

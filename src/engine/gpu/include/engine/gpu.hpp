@@ -53,19 +53,28 @@ class asset
         uint32_t id = 0;
 
       public:
+        texture(const texture &) = delete;
+        texture &operator=(const texture &) = delete;
         texture(const gltf::texture &texture);
+        texture(asset::texture &&other) noexcept;
+        // texture& operator=(texture&& other) noexcept;
         ~texture();
-        void bind(uint32_t unit);
+
+        operator uint32_t()
+        {
+            return id;
+        }
+        void bind(uint32_t unit) const;
     };
 
     class material
     {
       public:
-        const texture *normal_texture;
-        const texture *occlusion_texture;
-        const texture *emissive_texture;
-        const texture *base_color_texture;
-        const texture *metallic_roughness_texture;
+        const texture *normal_texture = nullptr;
+        const texture *occlusion_texture = nullptr;
+        const texture *emissive_texture = nullptr;
+        const texture *base_color_texture = nullptr;
+        const texture *metallic_roughness_texture = nullptr;
         vec::fvec4 base_color_factor = vec::fvec4(1, 1, 1, 1);
         vec::fvec3 emissive_factor = vec::fvec3(0, 0, 0);
         float metallic = 1;
@@ -73,6 +82,7 @@ class asset
         bool double_sided = false;
         float alpha_cutoff = 0.5;
         material(const engine::gpu::asset &, const gltf::material &);
+        void use(engine::gpu::shader::program &program) const;
     };
 
     class primitive
@@ -83,9 +93,8 @@ class asset
         uint32_t count = 0;
         bool short_indices = false;
 
-        const class material &material;
-
       public:
+        const class material &material;
         float radius = 0;
         primitive(const gpu::asset::material &,
                   const class gltf::mesh_primitive &);
@@ -93,6 +102,10 @@ class asset
 
         void draw() const;
         void bind() const;
+
+        primitive(const primitive &) = delete;
+        primitive &operator=(const primitive &) = delete;
+        primitive(primitive &&) noexcept;
     };
 
     class mesh
@@ -102,7 +115,11 @@ class asset
       public:
         float radius;
         mesh(const asset &, const class gltf::mesh &);
-        void draw(const engine::gpu::shader::program &) const;
+        void draw(engine::gpu::shader::program &) const;
+
+        mesh(const mesh &) = delete;
+        mesh &operator=(const mesh &) = delete;
+        mesh(mesh &&) noexcept;
     };
 
     std::unordered_map<std::string, texture> textures;
@@ -113,7 +130,7 @@ class asset
     asset(const std::string &path, gltf::gltf_cache &cache);
 
     void draw(const std::string &mesh_name,
-              const engine::gpu::shader::program &) const;
+              engine::gpu::shader::program &) const;
 };
 
 class target
@@ -240,6 +257,7 @@ class program
     int32_t u_projection = -1;
     int32_t u_normal = -1;
     int32_t u_mvp = -1;
+    int32_t u_albedo_tex = -1;
 
     vec::fmat4 projection;
     vec::fmat4 view;
@@ -258,6 +276,7 @@ class program
     void set_model_transform(const vec::transform3 &);
     void set_view_perspective(const vec::transform3 &,
                               const vec::perspective &);
+    void set_albedo_texture(const asset::texture &) const;
 };
 
 } // namespace engine::gpu::shader

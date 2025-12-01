@@ -36,7 +36,7 @@ void main()
     // FragColor.xyz = get_diffuse(5, vs_in.tangent_viewpos) *
     //                 texture(u_tex_color, vs_in.texcoord).rgb;
 
-    // FragColor.xyz = texture(u_tex_color, vs_in.texcoord).rgb;
+    FragColor.xyz = texture(u_tex_color, vs_in.texcoord).rgb;
 
     // FragColor.xyz = texture(u_tex_normal, vs_in.texcoord).xyz;
     // vec3 normal = texture(u_tex_normal, vs_in.texcoord).xyz;
@@ -45,7 +45,7 @@ void main()
     // FragColor.xyz = vs_in.tangent_viewpos;
     // FragColor.xyz = ( vs_in.tangent_normal * vec3(0,0,1) ) * vec3(1,1,1);
     // FragColor.xyz = vec3(1,0,0);
-    // FragColor.w = 1;
+    FragColor.w = 1;
 
-    FragColor = vec4(1,0,0,1);
+    // FragColor = vec4(1,0,0,1);
 }
