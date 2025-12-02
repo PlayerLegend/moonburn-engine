@@ -1256,9 +1256,9 @@ static uint8_t u8_from_float(float value)
 template <typename T>
 static void append_type(std::vector<uint8_t> &output, const T &input)
 {
-    output.resize(output.size() + sizeof(T));
-    T *end = reinterpret_cast<T *>(&output.end()[0]);
-    T *dest = end - 1;
+    size_t begin = output.size();
+    output.resize(begin + sizeof(T));
+    T *dest = (T *)(&output[begin]);
     *dest = input;
 }
 
