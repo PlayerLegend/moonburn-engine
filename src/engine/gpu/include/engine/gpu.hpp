@@ -5,6 +5,7 @@
 #include <engine/gltf.hpp>
 #include <engine/image.hpp>
 #include <engine/vec.hpp>
+#include <engine/skel.hpp>
 #include <optional>
 #include <stdint.h>
 #include <string>
@@ -19,13 +20,6 @@ class mesh;
 class material;
 class gltf;
 } // namespace gltf
-
-namespace skel
-{
-class pose;
-class armature;
-class animation;
-} // namespace skel
 
 namespace engine::gpu::attributes
 {
@@ -122,9 +116,22 @@ class asset
         mesh(mesh &&) noexcept;
     };
 
+    class object
+    {
+        const class mesh &mesh;
+        const skel::armature *skin;
+
+      public:
+        object(const asset &, const gltf::node &);
+        void draw(engine::gpu::shader::program &) const;
+    };
+
     std::unordered_map<std::string, texture> textures;
     std::unordered_map<std::string, material> materials;
+    std::unordered_map<std::string, skel::armature> armatures;
+    std::unordered_map<std::string, skel::animation> animations;
     std::unordered_map<std::string, mesh> meshes;
+    std::unordered_map<std::string, object> objects;
 
     asset(const gltf::gltf &gltf);
     asset(const std::string &path, gltf::gltf_cache &cache);

@@ -1,5 +1,5 @@
-#include "engine/vec.hpp"
 #include <array>
+#include <engine/vec.hpp>
 // #include <cmath>
 #include <engine/gltf.hpp>
 #include <engine/gpu.hpp>
@@ -42,19 +42,42 @@
 engine::gpu::asset::asset(const gltf::gltf &in)
 {
     for (const gltf::texture &in_tex : in.textures)
-    {
         textures.emplace(in_tex.name, in_tex);
-    }
 
     for (const gltf::material &in_material : in.materials)
         if (!in_material.name.empty())
             materials.emplace(in_material.name,
                               engine::gpu::asset::material(*this, in_material));
 
+    for (const gltf::skin &in_skin : in.skins)
+        if (!in_skin.name.empty())
+            armatures.emplace(in_skin.name, skel::armature(in_skin, in));
+
+    for (const gltf::animation &in_animation : in.animations)
+        if (!in_animation.name.empty())
+            animations.emplace(in_animation.name,
+                               skel::animation(in_animation, in));
+
     for (const gltf::mesh &in_mesh : in.meshes)
         if (!in_mesh.name.empty())
             meshes.emplace(in_mesh.name,
                            engine::gpu::asset::mesh(*this, in_mesh));
+
+    for (const gltf::node &in_noe : in.nodes)
+        if (!in_noe.name.empty())
+            objects.emplace(in_noe.name, object(*this, in_noe));
+}
+
+engine::gpu::asset::object::object(const asset &parent, const gltf::node &in)
+    : mesh(parent.meshes.at(in.mesh->name)),
+      skin(in.skin ? &parent.armatures.at(in.skin->name) : nullptr)
+{
+}
+
+void engine::gpu::asset::object::draw(
+    engine::gpu::shader::program &program) const
+{
+    mesh.draw(program);
 }
 
 engine::gpu::asset::asset(const std::string &path, gltf::gltf_cache &cache)
