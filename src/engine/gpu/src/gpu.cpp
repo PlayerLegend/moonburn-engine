@@ -88,9 +88,9 @@ engine::gpu::asset::asset(const std::string &path, gltf::gltf_cache &cache)
 void engine::gpu::asset::draw(const std::string &mesh_name,
                               engine::gpu::shader::program &program) const
 {
-    auto it = meshes.find(mesh_name);
+    auto it = objects.find(mesh_name);
 
-    if (it == meshes.end())
+    if (it == objects.end())
         return;
 
     it->second.draw(program);

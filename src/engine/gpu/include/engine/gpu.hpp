@@ -6,11 +6,9 @@
 #include <engine/image.hpp>
 #include <engine/vec.hpp>
 #include <engine/skel.hpp>
-#include <optional>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
-#include <variant>
 
 namespace gltf
 {

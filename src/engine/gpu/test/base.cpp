@@ -56,6 +56,6 @@ int main(int argc, char *argv[])
         shader_program.set_no_skin();
         shader_program.set_view_perspective(camera_transform, perspective);
         shader_program.set_model_transform(model_transform);
-        gpu_asset.draw("Cube.001", shader_program);
+        gpu_asset.draw("Cube", shader_program);
     }
 }
