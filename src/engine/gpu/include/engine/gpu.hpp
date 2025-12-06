@@ -1,11 +1,13 @@
 #pragma once
 
+#include "engine/json.hpp"
+#include "engine/memory.hpp"
 #include <engine/exception.hpp>
 #include <engine/filesystem.hpp>
 #include <engine/gltf.hpp>
 #include <engine/image.hpp>
-#include <engine/vec.hpp>
 #include <engine/skel.hpp>
+#include <engine/vec.hpp>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
@@ -116,10 +118,11 @@ class asset
 
     class object
     {
-        const class mesh &mesh;
-        const skel::armature *skin;
-
       public:
+        const class mesh &mesh;
+        const skel::armature *skin = nullptr;
+        std::string skin_name;
+
         object(const asset &, const gltf::node &);
         void draw(engine::gpu::shader::program &) const;
     };
@@ -177,7 +180,7 @@ class skin
   public:
     uint32_t bone_count = 0;
 
-    skin(uint32_t length);
+    skin();
     ~skin();
 
     void set_pose(const std::vector<vec::fmat4> &matrices);
@@ -186,7 +189,7 @@ class skin
         set_pose(matrices);
     }
 
-    void bind(uint32_t unit) const;
+    void bind() const;
 };
 
 } // namespace engine::gpu
@@ -243,13 +246,17 @@ class shader
 class vertex : public shader
 {
   public:
-    vertex(std::string source);
+    vertex(const std::string & source);
+    vertex(const engine::memory::allocation & source);
+    vertex(engine::filesystem::cache_binary & fs, const std::string & path);
 };
 
 class fragment : public shader
 {
   public:
     fragment(std::string source);
+    fragment(const engine::memory::allocation & source);
+    fragment(engine::filesystem::cache_binary & fs, const std::string & path);
 };
 
 class program
@@ -257,12 +264,15 @@ class program
     uint32_t id = 0;
     int32_t u_skin = -1;
     int32_t u_skin_count = -1;
+    int32_t u_skin_start = -1;
     int32_t u_model = -1;
     int32_t u_view = -1;
     int32_t u_projection = -1;
     int32_t u_normal = -1;
     int32_t u_mvp = -1;
     int32_t u_albedo_tex = -1;
+
+    size_t skin_bone_count = 0;
 
     vec::fmat4 projection;
     vec::fmat4 view;
@@ -278,6 +288,7 @@ class program
     void bind();
     void set_skin(const gpu::skin &skin);
     void set_no_skin();
+    void set_skin_slice(const skel::pose::slice &slice);
     void set_model_transform(const vec::transform3 &);
     void set_view_perspective(const vec::transform3 &,
                               const vec::perspective &);
@@ -350,3 +361,8 @@ class queue
 };
 
 } // namespace engine::gpu::frame
+
+namespace engine::gpu::state::forward {
+  void start_depth_pass();
+  void start_draw_pass();
+}

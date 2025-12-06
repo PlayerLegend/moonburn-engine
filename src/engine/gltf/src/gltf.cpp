@@ -1392,7 +1392,7 @@ void gltf::accessor::dump_u8vec4(std::vector<uint8_t> &output) const
             "Accessor type is not VEC4, cannot dump to u8vec4");
 
     output.reserve(output.size() + count * 4 * sizeof(uint8_t));
-    if (normalized)
+    if (normalized || component_type == component_type::FLOAT)
     {
         for (size_t i = 0; i < count; i++)
         {

@@ -1,3 +1,4 @@
+#include "engine/memory.hpp"
 #include <array>
 #include <engine/vec.hpp>
 // #include <cmath>
@@ -8,6 +9,7 @@
 
 #define UNIFORM_NAME_SKIN "u_skin"
 #define UNIFORM_NAME_SKIN_COUNT "u_skin_count"
+#define UNIFORM_NAME_SKIN_START "u_skin_start"
 #define UNIFORM_NAME_MODEL_MAT4 "u_model"
 #define UNIFORM_NAME_VIEW_MAT4 "u_view"
 #define UNIFORM_NAME_PROJECTION_MAT4 "u_projection"
@@ -15,7 +17,8 @@
 #define UNIFORM_NAME_MVP_MAT4 "u_mvp"
 #define UNIFORM_NAME_MATERIAL_ALBEDO_TEX "u_tex_color"
 
-#define COLOR_TEXTURE_UNIT 0
+#define POSE_TEXTURE_UNIT 0
+#define COLOR_TEXTURE_UNIT 1
 
 #define gl_check_error()                                                       \
     {                                                                          \
@@ -63,15 +66,19 @@ engine::gpu::asset::asset(const gltf::gltf &in)
             meshes.emplace(in_mesh.name,
                            engine::gpu::asset::mesh(*this, in_mesh));
 
-    for (const gltf::node &in_noe : in.nodes)
-        if (!in_noe.name.empty())
-            objects.emplace(in_noe.name, object(*this, in_noe));
+    for (const gltf::node &in_node : in.nodes)
+        if (!in_node.name.empty() && in_node.mesh)
+            objects.emplace(in_node.name, object(*this, in_node));
 }
 
 engine::gpu::asset::object::object(const asset &parent, const gltf::node &in)
-    : mesh(parent.meshes.at(in.mesh->name)),
-      skin(in.skin ? &parent.armatures.at(in.skin->name) : nullptr)
+    : mesh(parent.meshes.at(in.mesh->name))
 {
+    if (in.skin)
+    {
+        skin = &parent.armatures.at(in.skin->name);
+        skin_name = in.skin->name;
+    }
 }
 
 void engine::gpu::asset::object::draw(
@@ -758,13 +765,41 @@ engine::gpu::shader::shader::~shader()
         glDeleteShader(id);
 }
 
-engine::gpu::shader::vertex::vertex::vertex(std::string source)
+engine::gpu::shader::vertex::vertex::vertex(const std::string &source)
     : shader(GL_VERTEX_SHADER, source)
+{
+}
+
+engine::gpu::shader::vertex::vertex::vertex(
+    const engine::memory::allocation &source)
+    : engine::gpu::shader::vertex::vertex(
+          std::string((const char *)source.data(), source.size()))
+{
+}
+
+engine::gpu::shader::vertex::vertex::vertex(
+    engine::filesystem::cache_binary &fs,
+    const std::string &path)
+    : engine::gpu::shader::vertex(*fs[path])
 {
 }
 
 engine::gpu::shader::fragment::fragment::fragment(std::string source)
     : shader(GL_FRAGMENT_SHADER, source)
+{
+}
+
+engine::gpu::shader::fragment::fragment::fragment(
+    const engine::memory::allocation &source)
+    : engine::gpu::shader::fragment::fragment(
+          std::string((const char *)source.data(), source.size()))
+{
+}
+
+engine::gpu::shader::fragment::fragment::fragment(
+    engine::filesystem::cache_binary &fs,
+    const std::string &path)
+    : engine::gpu::shader::fragment(*fs[path])
 {
 }
 
@@ -835,14 +870,23 @@ void engine::gpu::shader::program::bind()
 
 void engine::gpu::shader::program::set_skin(const engine::gpu::skin &skin)
 {
-    uint32_t skin_unit = 2;
-    skin.bind(skin_unit);
     if (u_skin != -1)
-        gl_call(glUniform1i, u_skin, skin_unit);
-    if (u_skin_count != -1)
-        gl_call(glUniform1i, u_skin_count, skin.bone_count);
+        gl_call(glUniform1i, u_skin, POSE_TEXTURE_UNIT);
+
+    skin_bone_count = skin.bone_count;
 }
 
+void engine::gpu::shader::program::set_skin_slice(
+    const skel::pose::slice &slice)
+{
+    if (slice.begin + slice.size > skin_bone_count)
+        throw gpu::exception::base("Skin slice out of range for texture");
+
+    if (u_skin_start != -1)
+        gl_call(glUniform1i, u_skin_start, slice.begin);
+    if (u_skin_count != -1)
+        gl_call(glUniform1i, u_skin_count, slice.size);
+}
 void engine::gpu::shader::program::set_albedo_texture(
     const asset::texture &tex) const
 {
@@ -961,10 +1005,7 @@ void engine::gpu::skin::free_texture()
     }
 }
 
-engine::gpu::skin::skin(uint32_t length)
-{
-    allocate_texture(length);
-}
+engine::gpu::skin::skin() {}
 
 engine::gpu::skin::~skin()
 {
@@ -990,9 +1031,9 @@ void engine::gpu::skin::set_pose(const std::vector<vec::fmat4> &matrices)
             matrices.data());
 }
 
-void engine::gpu::skin::bind(uint32_t unit) const
+void engine::gpu::skin::bind() const
 {
-    gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)unit);
+    gl_call(glActiveTexture, GL_TEXTURE0 + (GLenum)POSE_TEXTURE_UNIT);
     gl_call(glBindTexture, GL_TEXTURE_2D, id);
 }
 
@@ -1052,3 +1093,22 @@ engine::gpu::cache::asset::get_mtime(const std::string &path)
 //     }
 //     return true;
 // }
+
+void engine::gpu::state::forward::start_depth_pass()
+{
+    gl_call(glEnable, GL_DEPTH_TEST);
+    gl_call(glDepthFunc, GL_LESS);
+    gl_call(glDepthMask, GL_TRUE);
+    gl_call(glColorMask, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    gl_call(glEnable, GL_CULL_FACE);
+    gl_call(glCullFace, GL_BACK);
+    gl_call(glClear, GL_DEPTH_BUFFER_BIT);
+}
+
+void engine::gpu::state::forward::start_draw_pass()
+{
+    gl_call(glColorMask, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    gl_call(glEnable, GL_DEPTH_TEST);
+    gl_call(glDepthFunc, GL_LEQUAL);
+    gl_call(glDepthMask, GL_FALSE);
+}

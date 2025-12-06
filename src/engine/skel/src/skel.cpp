@@ -333,17 +333,21 @@ skel::interpolation_params::interpolation_params(
     h11 = t * t * t - t * t;
 }
 
-skel::pose::pose(const skel::armature &_armature) : armature(_armature)
+skel::pose::pose()
 {
     clear();
 }
 
 void skel::pose::clear()
 {
-    transforms = armature.default_transforms;
+    transforms.resize(0);
     weights.resize(0);
+}
+
+void skel::pose::start(const skel::armature &armature)
+{
+    transforms = armature.default_transforms;
     weights.resize(transforms.size());
-    // output_matrices.resize(0);
 }
 
 void skel::pose::accumulate_translation(bone_index bone,
@@ -410,6 +414,9 @@ void skel::pose::accumulate_scale(bone_index bone,
 
 skel::pose::slice skel::pose::append_matrices(std::vector<vec::fmat4> &out)
 {
+    if (!armature)
+        throw skel::exception("Armature not set in append_matrics");
+
     size_t start_count = out.size();
     size_t set_count = transforms.size();
 
@@ -422,7 +429,7 @@ skel::pose::slice skel::pose::append_matrices(std::vector<vec::fmat4> &out)
 
     for (size_t i = 0; i < set_count; i++)
     {
-        const skel::armature_bone &bone = armature.bones[i];
+        const skel::armature_bone &bone = armature->bones[i];
         if (bone.parent != skel::max_bones)
         {
             set_matrices[i] = set_matrices[bone.parent] * set_matrices[i];
@@ -431,8 +438,10 @@ skel::pose::slice skel::pose::append_matrices(std::vector<vec::fmat4> &out)
 
     for (size_t i = 0; i < set_count; i++)
     {
-        set_matrices[i] = set_matrices[i] * armature.inverse_bind_matrices[i];
+        set_matrices[i] = set_matrices[i] * armature->inverse_bind_matrices[i];
     }
+
+    armature = nullptr;
 
     return {start_count, set_count};
 }
@@ -468,8 +477,11 @@ void skel::pose::accumulate(const std::string &root_name,
                             float time,
                             float weight)
 {
+    if (!armature)
+        return;
+
     std::vector<skel::bone_index> bone_hierarchy =
-        get_bone_hierarchy(armature, armature.bones_names.at(root_name));
+        get_bone_hierarchy(*armature, armature->bones_names.at(root_name));
 
     for (const skel::animation_times &time_data : animation.times)
     {
@@ -477,7 +489,7 @@ void skel::pose::accumulate(const std::string &root_name,
 
         for (const skel::bone_index bone_index : bone_hierarchy)
         {
-            const skel::armature_bone &bone = armature.bones[bone_index];
+            const skel::armature_bone &bone = armature->bones[bone_index];
 
             auto bone_it = time_data.bones.find(bone.name);
 

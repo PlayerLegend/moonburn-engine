@@ -144,25 +144,26 @@ class armature
     armature(const gltf::skin &gltf_skin, const gltf::gltf &gltf);
 };
 
-class frame
-{
-  public:
-    std::string root;
-    const skel::animation &animation;
-    float time;
-    float weight;
-    frame(const std::string &root,
-          const skel::animation &animation,
-          float time,
-          float weight)
-        : root(root), animation(animation), time(time), weight(weight)
-    {
-    }
-    frame(const skel::animation &animation, float time, float weight)
-        : animation(animation), time(time), weight(weight)
-    {
-    }
-};
+// class frame
+// {
+//   public:
+//     std::string root;
+//     const skel::animation &animation;
+//     const skel::armature &armature;
+//     float time;
+//     float weight;
+//     frame(const std::string &root,
+//           const skel::animation &animation,
+//           float time,
+//           float weight)
+//         : root(root), animation(animation), time(time), weight(weight)
+//     {
+//     }
+//     frame(const skel::animation &animation, float time, float weight)
+//         : animation(animation), time(time), weight(weight)
+//     {
+//     }
+// };
 
 class pose
 {
@@ -177,7 +178,7 @@ class pose
 
     std::vector<transform_weight> weights;
     std::vector<vec::transform3> transforms;
-    const skel::armature &armature;
+    const skel::armature *armature;
 
     void accumulate_translation(bone_index bone,
                                 const vec::fvec3 &translation,
@@ -189,33 +190,35 @@ class pose
     accumulate_scale(bone_index bone, const vec::fvec3 &scale, float weight);
 
   public:
-    struct slice {
-      size_t begin;
-      size_t size;
+    struct slice
+    {
+        size_t begin;
+        size_t size;
     };
     void clear();
-    // operator const std::vector<vec::fmat4> &();
-    slice append_matrices(std::vector<vec::fmat4> & out);
+    void start(const skel::armature &armature);
+    slice append_matrices(std::vector<vec::fmat4> &out);
     void accumulate(const std::string &root_name,
                     const skel::animation &animation,
                     float time,
                     float weight);
     void accumulate(const skel::animation &animation, float time, float weight)
     {
-        accumulate(armature.root_name, animation, time, weight);
+        if (armature)
+            accumulate(armature->root_name, animation, time, weight);
     }
-    void accumulate(const frame &_frame)
-    {
-        accumulate(_frame.root.empty() ? armature.root_name : _frame.root,
-                   _frame.animation,
-                   _frame.time,
-                   _frame.weight);
-    }
-    void operator+=(const frame &_frame)
-    {
-        accumulate(_frame);
-    }
-    pose(const class armature &armature);
+    // void accumulate(const frame &_frame)
+    // {
+    //     accumulate(_frame.root.empty() ? armature.root_name : _frame.root,
+    //                _frame.animation,
+    //                _frame.time,
+    //                _frame.weight);
+    // }
+    // void operator+=(const frame &_frame)
+    // {
+    //     accumulate(_frame);
+    // }
+    pose();
 };
 
 } // namespace skel

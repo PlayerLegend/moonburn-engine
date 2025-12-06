@@ -43,7 +43,6 @@ class allocation : public engine::memory::allocation
 
 class whitelist
 {
-    std::mutex mutex;
     std::unordered_set<std::string> paths;
 
   public:
@@ -51,7 +50,7 @@ class whitelist
     whitelist(const std::string &root);
     void add(const std::string &path);
     void add_recursive(const std::string &root);
-    bool contains(const std::string &path);
+    bool contains(const std::string &path) const;
 };
 
 template <typename T, typename... L> class cache
@@ -66,9 +65,7 @@ template <typename T, typename... L> class cache
       public:
         mtime last_modified;
         std::string path;
-        file(const std::string &_path,
-             mtime mtime,
-             L... args)
+        file(const std::string &_path, mtime mtime, L... args)
             : contents(_path, args...), last_modified(mtime), path(_path)
         {
         }
@@ -82,7 +79,7 @@ template <typename T, typename... L> class cache
     using map = std::unordered_map<std::string, reference>;
 
   protected:
-    class whitelist &whitelist;
+    const class whitelist &whitelist;
     map contents;
     std::mutex mutex;
 
@@ -92,7 +89,7 @@ template <typename T, typename... L> class cache
                            std::filesystem::file_time_type) = 0;
 
   public:
-    cache(class whitelist &wl) : whitelist(wl) {}
+    cache(const class whitelist &wl) : whitelist(wl) {}
 
     reference operator[](const std::string &_path)
     {
@@ -108,6 +105,11 @@ template <typename T, typename... L> class cache
             return contents[_path] = load(_path, mtime);
         return it->second;
     };
+
+    bool contains(const std::string &path)
+    {
+        return whitelist.contains(path);
+    }
 };
 
 class cache_binary : public cache<filesystem::allocation>
@@ -125,7 +127,9 @@ class cache_binary : public cache<filesystem::allocation>
     }
 
   public:
-    cache_binary(class whitelist &wl) : cache<filesystem::allocation>(wl) {}
+    cache_binary(const class whitelist &wl) : cache<filesystem::allocation>(wl)
+    {
+    }
 };
 
 }; // namespace engine::filesystem

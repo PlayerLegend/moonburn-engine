@@ -1,20 +1,41 @@
+#pragma once
+
 #include <engine/vec.hpp>
+#include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace engine::view3
 {
-class object
+struct animation
 {
-    vec::transform3 transform;
-    vec::fmat4 transform_mat;
-    bool transform_mat_stale = true;
-
-  public:
-    object() {};
-    std::string mesh;
-    std::string armature;
-    void set_transform(vec::transform3);
+    float weight;
+    float time;
+    std::string name;
 };
 
-void draw(const object &object, const vec::fmat4_view &view, const vec::fmat4_projection &proj);
+struct object
+{
+    vec::transform3 transform;
+    std::string shader;
+    std::string asset;
+    std::vector<animation> animations;
+    std::optional<std::vector<std::string>> nodes;
+    object() {};
+};
+
+namespace pipeline
+{
+class forward
+{
+    struct internal;
+    std::unique_ptr<internal> *internal;
+
+  public:
+    void operator+=(object &&other);
+    void draw();
+};
+
+} // namespace pipeline
 }; // namespace engine::view3

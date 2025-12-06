@@ -32,22 +32,19 @@ filesystem::whitelist::whitelist(const std::string &root)
 
 void filesystem::whitelist::add(const std::string &path)
 {
-    std::lock_guard<std::mutex> lock(mutex);
     paths.insert(std::filesystem::absolute(path).string());
 }
 
 void filesystem::whitelist::add_recursive(const std::string &root)
 {
-    std::lock_guard<std::mutex> lock(mutex);
     for (auto &p : std::filesystem::recursive_directory_iterator(root))
     {
         paths.insert(std::filesystem::absolute(p.path()).string());
     }
 }
 
-bool filesystem::whitelist::contains(const std::string &path)
+bool filesystem::whitelist::contains(const std::string &path) const
 {
-    std::lock_guard<std::mutex> lock(mutex);
     return paths.find(std::filesystem::absolute(path).string()) != paths.end();
 }
 } // namespace engine::filesystem
