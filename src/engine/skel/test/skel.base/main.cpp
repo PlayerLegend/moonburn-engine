@@ -36,7 +36,10 @@ int main(int argc, char *argv[])
 
     pose += skel::frame(animation, 0.2f, 1.0f);
 
-    const std::vector<vec::fmat4> &matrices = pose;
+    std::vector<vec::fmat4> matrices;
+    skel::pose::slice set = pose.append_matrices(matrices);
+    assert(set.begin == 0);
+    assert(set.size == matrices.size());
 
     std::cout << "Got " << matrices.size() << " bone matrices\n";
 

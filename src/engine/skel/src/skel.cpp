@@ -343,7 +343,7 @@ void skel::pose::clear()
     transforms = armature.default_transforms;
     weights.resize(0);
     weights.resize(transforms.size());
-    output.resize(0);
+    // output_matrices.resize(0);
 }
 
 void skel::pose::accumulate_translation(bone_index bone,
@@ -408,33 +408,33 @@ void skel::pose::accumulate_scale(bone_index bone,
     }
 }
 
-skel::pose::operator const std::vector<vec::fmat4> &()
+skel::pose::slice skel::pose::append_matrices(std::vector<vec::fmat4> &out)
 {
-    if (output.size() != 0)
-        return output;
+    size_t start_count = out.size();
+    size_t set_count = transforms.size();
 
-    output.reserve(transforms.size());
+    out.reserve(start_count + set_count);
 
     for (const vec::transform3 &transform : transforms)
-    {
-        output.push_back(vec::fmat4_transform3(transform));
-    }
+        out.emplace_back(vec::fmat4_transform3(transform));
 
-    for (size_t i = 0, size = output.size(); i < size; i++)
+    vec::fmat4 *set_matrices = &out[start_count];
+
+    for (size_t i = 0; i < set_count; i++)
     {
         const skel::armature_bone &bone = armature.bones[i];
         if (bone.parent != skel::max_bones)
         {
-            output[i] = output[bone.parent] * output[i];
+            set_matrices[i] = set_matrices[bone.parent] * set_matrices[i];
         }
     }
 
-    for (size_t i = 0, size = output.size(); i < size; i++)
+    for (size_t i = 0; i < set_count; i++)
     {
-        output[i] = output[i] * armature.inverse_bind_matrices[i];
+        set_matrices[i] = set_matrices[i] * armature.inverse_bind_matrices[i];
     }
 
-    return output;
+    return {start_count, set_count};
 }
 
 std::vector<skel::bone_index> get_bone_hierarchy(const skel::armature &armature,
@@ -468,8 +468,6 @@ void skel::pose::accumulate(const std::string &root_name,
                             float time,
                             float weight)
 {
-    output.resize(0);
-
     std::vector<skel::bone_index> bone_hierarchy =
         get_bone_hierarchy(armature, armature.bones_names.at(root_name));
 

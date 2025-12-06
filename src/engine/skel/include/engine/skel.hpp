@@ -177,7 +177,6 @@ class pose
 
     std::vector<transform_weight> weights;
     std::vector<vec::transform3> transforms;
-    std::vector<vec::fmat4> output;
     const skel::armature &armature;
 
     void accumulate_translation(bone_index bone,
@@ -190,8 +189,13 @@ class pose
     accumulate_scale(bone_index bone, const vec::fvec3 &scale, float weight);
 
   public:
+    struct slice {
+      size_t begin;
+      size_t size;
+    };
     void clear();
-    operator const std::vector<vec::fmat4> &();
+    // operator const std::vector<vec::fmat4> &();
+    slice append_matrices(std::vector<vec::fmat4> & out);
     void accumulate(const std::string &root_name,
                     const skel::animation &animation,
                     float time,
