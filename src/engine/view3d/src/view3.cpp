@@ -13,17 +13,41 @@ struct engine::view3::pipeline::forward::internal
     engine::gpu::cache::asset asset_cache;
     const engine::filesystem::whitelist &whitelist;
 
-    struct pose
+    class pose
     {
         skel::pose skel;
         std::vector<vec::fmat4> mat;
         gpu::skin gpu;
 
+        bool is_on_gpu = false;
+
+      public:
+        void start(const skel::armature &arm)
+        {
+            is_on_gpu = false;
+            skel.start(arm);
+        }
+        void accumulate(const skel::animation &anim, float time, float weight)
+        {
+            skel.accumulate(anim, time, weight);
+        }
+        skel::pose::slice finish()
+        {
+            return skel.append_matrices(mat);
+        }
         void set_gpu_pose()
         {
+            if (is_on_gpu)
+                return;
             gpu = mat;
             mat.clear();
             skel.clear();
+            gpu.bind();
+            is_on_gpu = true;
+        }
+        void bind()
+        {
+            set_gpu_pose();
             gpu.bind();
         }
     };
@@ -45,11 +69,13 @@ struct engine::view3::pipeline::forward::internal
         {
             const gpu::asset::mesh &mesh;
             const vec::transform3 &transform;
+            class pose &pose;
             skel::pose::slice slice;
-            pose_node(const gpu::asset::mesh &mesh,
-                      const vec::transform3 &transform,
-                      const skel::pose::slice &slice)
-                : mesh(mesh), transform(transform), slice(slice)
+            pose_node(const gpu::asset::mesh &_mesh,
+                      const vec::transform3 &_transform,
+                      class pose &_pose,
+                      const skel::pose::slice &_slice)
+                : mesh(_mesh), transform(_transform), pose(_pose), slice(_slice)
             {
             }
         };
@@ -58,7 +84,7 @@ struct engine::view3::pipeline::forward::internal
         {
             gpu::cache::asset::reference ref;
             vec::transform3 transform;
-            internal::pose &pose;
+            internal::pose pose;
 
             void
             add_node(const std::string &node_name,
@@ -82,6 +108,7 @@ struct engine::view3::pipeline::forward::internal
                     else
                         pose_nodes.emplace_back(asset_node.mesh,
                                                 transform,
+                                                pose,
                                                 skin_it->second);
                 }
                 else
@@ -89,11 +116,9 @@ struct engine::view3::pipeline::forward::internal
             }
 
             hold(const struct object &obj,
-                 internal::pose &_pose,
                  gpu::cache::asset &cache,
                  std::vector<static_node> &static_nodes,
                  std::vector<pose_node> &pose_nodes)
-                : pose(_pose)
             {
                 ref = cache[obj.asset];
 
@@ -103,7 +128,7 @@ struct engine::view3::pipeline::forward::internal
 
                 for (const auto &[name, arm] : asset.armatures)
                 {
-                    pose.skel.start(arm);
+                    pose.start(arm);
 
                     for (const view3::animation &in_anim : obj.animations)
                     {
@@ -113,13 +138,12 @@ struct engine::view3::pipeline::forward::internal
                         if (anim_it == asset.animations.end())
                             continue;
 
-                        pose.skel.accumulate(anim_it->second,
-                                             in_anim.time,
-                                             in_anim.weight);
+                        pose.accumulate(anim_it->second,
+                                        in_anim.time,
+                                        in_anim.weight);
                     }
 
-                    armatures.emplace(name,
-                                      pose.skel.append_matrices(pose.mat));
+                    armatures.emplace(name, pose.finish());
                 }
 
                 if (obj.nodes->empty())
@@ -134,14 +158,10 @@ struct engine::view3::pipeline::forward::internal
         std::vector<hold> holds;
         std::vector<static_node> static_nodes;
         std::vector<pose_node> pose_nodes;
-        // skel::pose skel_pose;
-        // std::vector<vec::fmat4> pose_mat;
 
-        void add_node(const struct object &obj,
-                      internal::pose &pose,
-                      gpu::cache::asset &cache)
+        void add_node(const struct object &obj, gpu::cache::asset &cache)
         {
-            holds.emplace_back(obj, pose, cache, static_nodes, pose_nodes);
+            holds.emplace_back(obj, cache, static_nodes, pose_nodes);
         }
 
         void clear()
@@ -180,7 +200,6 @@ struct engine::view3::pipeline::forward::internal
     };
 
     std::unordered_map<std::string, shader> shaders;
-    internal::pose pose;
 
     void add_object(engine::view3::object &obj)
     {
@@ -189,7 +208,7 @@ struct engine::view3::pipeline::forward::internal
         if (shader_it == shaders.end())
             throw engine::exception("Shader not loaded");
 
-        shader_it->second.tasks.add_node(obj, pose, asset_cache);
+        shader_it->second.tasks.add_node(obj, asset_cache);
     }
 
     void load_shaders(const std::vector<std::string> &paths)
@@ -217,8 +236,8 @@ struct engine::view3::pipeline::forward::internal
         {
             if (transform != &node.transform)
             {
-                program.set_model_transform(node.transform);
                 transform = &node.transform;
+                program.set_model_transform(node.transform);
             }
 
             node.mesh.draw(program);
@@ -228,26 +247,30 @@ struct engine::view3::pipeline::forward::internal
     void draw_pose(const vec::transform3 &camera_transform,
                    const vec::perspective &camera_perspective,
                    gpu::shader::program &program,
-                   gpu::skin &skin,
                    const std::vector<tasks::pose_node> &nodes)
     {
         if (nodes.empty())
             return;
 
         const vec::transform3 *transform = nullptr;
+        const pose *pose = nullptr;
 
         program.bind();
         program.set_view_perspective(camera_transform, camera_perspective);
-        program.set_skin(skin);
 
         for (const tasks::pose_node &node : nodes)
         {
             if (transform != &node.transform)
             {
-                program.set_model_transform(node.transform);
                 transform = &node.transform;
+                program.set_model_transform(node.transform);
             }
 
+            if (pose != &node.pose)
+            {
+                pose = &node.pose;
+                node.pose.bind();
+            }
             program.set_skin_slice(node.slice);
 
             node.mesh.draw(program);
@@ -257,9 +280,8 @@ struct engine::view3::pipeline::forward::internal
     void draw(const vec::transform3 &camera_transform,
               const vec::perspective &camera_perspective)
     {
-        pose.set_gpu_pose();
         gpu::state::forward::start_depth_pass();
-        
+
         for (auto &[name, shader] : shaders)
         {
             draw_static(camera_transform,
@@ -270,7 +292,6 @@ struct engine::view3::pipeline::forward::internal
             draw_pose(camera_transform,
                       camera_perspective,
                       shader.pose_depth_prepass,
-                      pose.gpu,
                       shader.tasks.pose_nodes);
         }
 
@@ -286,7 +307,6 @@ struct engine::view3::pipeline::forward::internal
             draw_pose(camera_transform,
                       camera_perspective,
                       shader.pose_draw,
-                      pose.gpu,
                       shader.tasks.pose_nodes);
         }
     }
