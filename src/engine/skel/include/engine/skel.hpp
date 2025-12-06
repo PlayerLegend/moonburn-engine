@@ -1,3 +1,5 @@
+#pragma once
+
 #include <engine/gltf.hpp>
 #include <engine/vec.hpp>
 #include <variant>
