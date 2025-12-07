@@ -122,6 +122,7 @@ struct engine::view3::pipeline::forward::internal
                  gpu::cache::asset &cache,
                  std::vector<static_node> &static_nodes,
                  std::vector<pose_node> &pose_nodes)
+                : transform(obj.transform)
             {
                 ref = cache[obj.asset];
 
