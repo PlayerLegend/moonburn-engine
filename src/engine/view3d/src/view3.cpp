@@ -19,6 +19,10 @@ struct engine::view3::pipeline::forward::internal
     struct shader;
     std::unordered_map<std::string, shader> shaders;
 
+    class pose_cache {
+        size_t next;
+    };
+
     class pose
     {
         skel::pose skel;

@@ -49,8 +49,8 @@ class asset
       public:
         texture(const texture &) = delete;
         texture &operator=(const texture &) = delete;
-        texture(const gltf::texture &texture);
         texture(asset::texture &&other) noexcept;
+        texture(const gltf::texture &texture);
         // texture& operator=(texture&& other) noexcept;
         ~texture();
 
@@ -172,24 +172,36 @@ class gbuffer
 
 class skin
 {
-    uint32_t id = 0;
-
-    void allocate_texture(uint32_t bone_count);
-    void free_texture();
-
-  public:
-    uint32_t bone_count = 0;
-
-    skin();
-    ~skin();
-
-    void set_pose(const std::vector<vec::fmat4> &matrices);
-    void operator=(const std::vector<vec::fmat4> &matrices)
+    class texture
     {
-        set_pose(matrices);
-    }
+        uint32_t id = 0;
 
-    void bind() const;
+        void allocate_texture(uint32_t bone_count);
+        void free_texture();
+
+      public:
+        uint32_t bone_count = 0;
+
+        texture();
+        ~texture();
+
+        texture(const texture &) = delete;
+        texture &operator=(const texture &) = delete;
+        texture(texture &&other) noexcept;
+
+        void set_pose(const std::vector<vec::fmat4> &matrices);
+        void operator=(const std::vector<vec::fmat4> &matrices)
+        {
+            set_pose(matrices);
+        }
+
+        void bind() const;
+    };
+
+    skel::pose pose;
+
+    void start(const skel::armature &armature);
+    
 };
 
 } // namespace engine::gpu
