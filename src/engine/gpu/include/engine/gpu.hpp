@@ -1,11 +1,11 @@
 #pragma once
 
-#include "engine/json.hpp"
-#include "engine/memory.hpp"
 #include <engine/exception.hpp>
 #include <engine/filesystem.hpp>
 #include <engine/gltf.hpp>
 #include <engine/image.hpp>
+#include <engine/json.hpp>
+#include <engine/memory.hpp>
 #include <engine/skel.hpp>
 #include <engine/vec.hpp>
 #include <stdint.h>
@@ -201,10 +201,11 @@ class asset : public filesystem::cache<engine::gpu::asset, gltf::gltf_cache &>
     gltf::gltf_cache &fs_gltf;
 
   protected:
-    reference load(const std::string &path,
+    reference load(const std::string &path_rel,
+                   const std::string &path_abs,
                    std::filesystem::file_time_type mtime) override
     {
-        return std::make_shared<engine::gpu::cache::asset::file>(path,
+        return std::make_shared<engine::gpu::cache::asset::file>(path_rel,
                                                                  mtime,
                                                                  fs_gltf);
     }
@@ -246,17 +247,17 @@ class shader
 class vertex : public shader
 {
   public:
-    vertex(const std::string & source);
-    vertex(const engine::memory::allocation & source);
-    vertex(engine::filesystem::cache_binary & fs, const std::string & path);
+    vertex(const std::string &source);
+    vertex(const engine::memory::allocation &source);
+    vertex(engine::filesystem::cache_binary &fs, const std::string &path);
 };
 
 class fragment : public shader
 {
   public:
     fragment(std::string source);
-    fragment(const engine::memory::allocation & source);
-    fragment(engine::filesystem::cache_binary & fs, const std::string & path);
+    fragment(const engine::memory::allocation &source);
+    fragment(engine::filesystem::cache_binary &fs, const std::string &path);
 };
 
 class program
@@ -274,9 +275,9 @@ class program
 
     size_t skin_bone_count = 0;
 
-    vec::fmat4 projection;
-    vec::fmat4 view;
     vec::fmat4 model;
+    vec::fmat4 view;
+    vec::fmat4 projection;
     vec::fmat4 view_projection;
     void set_view(const vec::transform3 &);
     void set_perspective(const vec::perspective &);
@@ -284,6 +285,9 @@ class program
   public:
     program(const vertex *vertex_shader, const fragment *fragment_shader);
     ~program();
+    program(const program &) = delete;
+    program &operator=(const program &) = delete;
+    program(program &&other) noexcept;
 
     void bind();
     void set_skin(const gpu::skin &skin);
@@ -362,7 +366,8 @@ class queue
 
 } // namespace engine::gpu::frame
 
-namespace engine::gpu::state::forward {
-  void start_depth_pass();
-  void start_draw_pass();
-}
+namespace engine::gpu::state::forward
+{
+void start_depth_pass();
+void start_draw_pass();
+} // namespace engine::gpu::state::forward

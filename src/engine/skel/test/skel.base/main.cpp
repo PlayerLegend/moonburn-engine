@@ -32,9 +32,12 @@ int main(int argc, char *argv[])
 
     skel::animation animation(doc.get_animation(0), doc);
 
-    skel::pose pose(armature);
+    skel::pose pose;
 
-    pose += skel::frame(animation, 0.2f, 1.0f);
+    pose.start(armature);
+
+    // pose += skel::frame(animation, 0.2f, 1.0f);
+    pose.accumulate(animation, 0.2f, 0.2f);
 
     std::vector<vec::fmat4> matrices;
     skel::pose::slice set = pose.append_matrices(matrices);

@@ -8,7 +8,6 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace engine::filesystem::exception
 {
@@ -41,16 +40,18 @@ class allocation : public engine::memory::allocation
     allocation(const std::string &path);
 };
 
-class whitelist
+class whitelist : std::unordered_map<std::string, std::string>
 {
-    std::unordered_set<std::string> paths;
+    using base = std::unordered_map<std::string, std::string>;
 
   public:
     whitelist() {}
     whitelist(const std::string &root);
-    void add(const std::string &path);
+    void add(const std::string &name, const std::string &absolute);
     void add_recursive(const std::string &root);
-    bool contains(const std::string &path) const;
+    using base::begin;
+    using base::end;
+    using base::find;
 };
 
 template <typename T, typename... L> class cache
@@ -85,7 +86,8 @@ template <typename T, typename... L> class cache
 
     virtual std::filesystem::file_time_type
     get_mtime(const std::string &path) = 0;
-    virtual reference load(const std::string &path,
+    virtual reference load(const std::string &path_rel,
+                           const std::string &path_abs,
                            std::filesystem::file_time_type) = 0;
 
   public:
@@ -94,31 +96,33 @@ template <typename T, typename... L> class cache
     reference operator[](const std::string &_path)
     {
         std::lock_guard<std::mutex> lock(mutex);
-        if (!whitelist.contains(_path))
+        const auto path = whitelist.find(_path);
+        if (path == whitelist.end())
             throw filesystem::exception::not_found("Path not in whitelist: " +
                                                    _path);
 
-        mtime mtime = get_mtime(_path);
+        mtime mtime = get_mtime(path->second);
         typename map::iterator it = contents.find(_path);
 
         if (it == contents.end() || it->second->last_modified < mtime)
-            return contents[_path] = load(_path, mtime);
+            return contents[_path] = load(path->first, path->second, mtime);
         return it->second;
     };
 
     bool contains(const std::string &path)
     {
-        return whitelist.contains(path);
+        return whitelist.find(path) != whitelist.end();
     }
 };
 
 class cache_binary : public cache<filesystem::allocation>
 {
   protected:
-    reference load(const std::string &path,
+    reference load(const std::string &path_rel,
+                   const std::string &path_abs,
                    std::filesystem::file_time_type mtime) override
     {
-        return std::make_shared<cache_binary::file>(path, mtime);
+        return std::make_shared<cache_binary::file>(path_abs, mtime);
     }
 
     std::filesystem::file_time_type get_mtime(const std::string &path) override

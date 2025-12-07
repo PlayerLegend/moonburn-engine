@@ -30,21 +30,23 @@ filesystem::whitelist::whitelist(const std::string &root)
     add_recursive(root);
 }
 
-void filesystem::whitelist::add(const std::string &path)
+void filesystem::whitelist::add(const std::string &name,
+                                const std::string &absolute)
 {
-    paths.insert(std::filesystem::absolute(path).string());
+    (*this)[name] = std::filesystem::absolute(absolute).string();
 }
 
 void filesystem::whitelist::add_recursive(const std::string &root)
 {
-    for (auto &p : std::filesystem::recursive_directory_iterator(root))
+    std::filesystem::path root_path = root;
+
+    for (auto &p : std::filesystem::recursive_directory_iterator(root_path))
     {
-        paths.insert(std::filesystem::absolute(p.path()).string());
+        emplace(std::filesystem::relative(p.path(), root_path)
+                          .lexically_normal()
+                          .string(),
+                      std::filesystem::absolute(p.path()).string());
     }
 }
 
-bool filesystem::whitelist::contains(const std::string &path) const
-{
-    return paths.find(std::filesystem::absolute(path).string()) != paths.end();
-}
 } // namespace engine::filesystem

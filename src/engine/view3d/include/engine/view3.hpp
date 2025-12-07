@@ -22,7 +22,6 @@ struct object
     std::string asset;
     std::vector<animation> animations;
     std::optional<std::vector<std::string>> nodes;
-    object() {};
 };
 
 namespace pipeline
@@ -30,11 +29,14 @@ namespace pipeline
 class forward
 {
     struct internal;
-    std::unique_ptr<internal> *internal;
+    std::unique_ptr<internal> internal;
 
   public:
-    void operator+=(object &&other);
-    void draw();
+    forward(const std::string &root);
+    ~forward();
+    void operator+=(const object &other);
+    void draw(const vec::transform3 &camera_transform,
+              const vec::perspective &camera_perspective);
 };
 
 } // namespace pipeline

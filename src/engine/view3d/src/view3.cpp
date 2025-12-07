@@ -1,17 +1,23 @@
-#include "engine/exception.hpp"
-#include "engine/filesystem.hpp"
-#include "engine/vec.hpp"
+#include "engine/gltf.hpp"
+#include "engine/image.hpp"
+#include <engine/exception.hpp>
+#include <engine/filesystem.hpp>
 #include <engine/gpu.hpp>
 #include <engine/skel.hpp>
+#include <engine/vec.hpp>
 #include <engine/view3.hpp>
-#include <memory>
 #include <unordered_map>
 
 struct engine::view3::pipeline::forward::internal
 {
     engine::gpu::skin gpu_skin;
-    engine::gpu::cache::asset asset_cache;
-    const engine::filesystem::whitelist &whitelist;
+    engine::filesystem::whitelist whitelist;
+    engine::filesystem::cache_binary fs_bin;
+    image::cache::rgba32 fs_image;
+    gltf::gltf_cache fs_gltf;
+    engine::gpu::cache::asset fs_asset;
+    struct shader;
+    std::unordered_map<std::string, shader> shaders;
 
     class pose
     {
@@ -35,19 +41,16 @@ struct engine::view3::pipeline::forward::internal
         {
             return skel.append_matrices(mat);
         }
-        void set_gpu_pose()
-        {
-            if (is_on_gpu)
-                return;
-            gpu = mat;
-            mat.clear();
-            skel.clear();
-            gpu.bind();
-            is_on_gpu = true;
-        }
         void bind()
         {
-            set_gpu_pose();
+            if (!is_on_gpu)
+            {
+                gpu = mat;
+                mat.clear();
+                skel.clear();
+                gpu.bind();
+                is_on_gpu = true;
+            }
             gpu.bind();
         }
     };
@@ -84,7 +87,7 @@ struct engine::view3::pipeline::forward::internal
         {
             gpu::cache::asset::reference ref;
             vec::transform3 transform;
-            internal::pose pose;
+            internal::pose pose; // need to cache gpu textures from this
 
             void
             add_node(const std::string &node_name,
@@ -146,12 +149,12 @@ struct engine::view3::pipeline::forward::internal
                     armatures.emplace(name, pose.finish());
                 }
 
-                if (obj.nodes->empty())
-                    for (const auto &[name, node] : asset.objects)
-                        add_node(name, armatures, static_nodes, pose_nodes);
-                else
+                if (obj.nodes.has_value())
                     for (const std::string &in_node : obj.nodes.value())
                         add_node(in_node, armatures, static_nodes, pose_nodes);
+                else
+                    for (const auto &[name, node] : asset.objects)
+                        add_node(name, armatures, static_nodes, pose_nodes);
             }
         };
 
@@ -174,7 +177,7 @@ struct engine::view3::pipeline::forward::internal
 
     struct shader
     {
-        tasks tasks;
+        struct tasks tasks;
 
         gpu::shader::program pose_depth_prepass;
         gpu::shader::program pose_draw;
@@ -199,24 +202,26 @@ struct engine::view3::pipeline::forward::internal
         }
     };
 
-    std::unordered_map<std::string, shader> shaders;
-
-    void add_object(engine::view3::object &obj)
+    void add_object(const engine::view3::object &obj)
     {
         const auto shader_it = shaders.find(obj.shader);
 
         if (shader_it == shaders.end())
-            throw engine::exception("Shader not loaded");
-
-        shader_it->second.tasks.add_node(obj, asset_cache);
+        {
+            const auto added_it =
+                shaders.emplace(obj.shader, shader(obj.shader, fs_bin));
+            added_it.first->second.tasks.add_node(obj, fs_asset);
+        }
+        else
+        {
+            shader_it->second.tasks.add_node(obj, fs_asset);
+        }
     }
 
     void load_shaders(const std::vector<std::string> &paths)
     {
-        engine::filesystem::cache_binary fs(whitelist);
-
         for (const std::string &path : paths)
-            shaders.emplace(path, shader(path, fs));
+            shaders.emplace(path, shader(path, fs_bin));
     }
 
     void draw_static(const vec::transform3 &camera_transform,
@@ -308,6 +313,33 @@ struct engine::view3::pipeline::forward::internal
                       camera_perspective,
                       shader.pose_draw,
                       shader.tasks.pose_nodes);
+
+            shader.tasks.clear();
         }
     }
+
+    internal(const std::string &root)
+        : whitelist(root), fs_bin(whitelist), fs_image(whitelist),
+          fs_gltf(whitelist, fs_bin, fs_image), fs_asset(whitelist, fs_gltf)
+    {
+    }
 };
+
+engine::view3::pipeline::forward::forward(const std::string &root)
+    : internal(std::make_unique<struct internal>(root))
+{
+}
+
+engine::view3::pipeline::forward::~forward() = default;
+
+void engine::view3::pipeline::forward::operator+=(const object &other)
+{
+    internal->add_object(other);
+}
+
+void engine::view3::pipeline::forward::draw(
+    const vec::transform3 &camera_transform,
+    const vec::perspective &camera_perspective)
+{
+    internal->draw(camera_transform, camera_perspective);
+}

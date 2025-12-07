@@ -857,6 +857,18 @@ engine::gpu::shader::program::program(const vertex *vertex_shader,
         std::cerr << "No albedo texture uniform\n";
 }
 
+engine::gpu::shader::program::program(program &&other) noexcept
+    : id(other.id), u_skin(other.u_skin), u_skin_count(other.u_skin_count),
+      u_model(other.u_model), u_view(other.u_view),
+      u_projection(other.u_projection), u_normal(other.u_normal),
+      u_mvp(other.u_mvp), u_albedo_tex(other.u_albedo_tex),
+      skin_bone_count(other.skin_bone_count), model(other.model),
+      view(other.view), projection(other.projection),
+      view_projection(other.view_projection)
+{
+    other.id = 0;
+}
+
 engine::gpu::shader::program::~program()
 {
     if (id)

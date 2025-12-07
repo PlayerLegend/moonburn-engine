@@ -344,10 +344,11 @@ void skel::pose::clear()
     weights.resize(0);
 }
 
-void skel::pose::start(const skel::armature &armature)
+void skel::pose::start(const skel::armature &_armature)
 {
-    transforms = armature.default_transforms;
+    transforms = _armature.default_transforms;
     weights.resize(transforms.size());
+    armature = &_armature;
 }
 
 void skel::pose::accumulate_translation(bone_index bone,

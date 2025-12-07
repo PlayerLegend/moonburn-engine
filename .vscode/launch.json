@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "(gdb) Launch image.load",
             "type": "cppdbg",
@@ -129,6 +128,31 @@
                 "${workspaceFolder}/src/engine/gpu/test/animation.glb",
                 "${workspaceFolder}/shader/forward/forward.vert",
                 "${workspaceFolder}/shader/forward/forward.frag"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "(gdb) Launch (view3.base)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/engine/view3d/test/view3.base",
+            "args": [
+                "${workspaceFolder}",
+                "src/engine/gpu/test/cube.glb",
+                "shader/forward/forward"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
