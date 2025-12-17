@@ -1,4 +1,3 @@
-#include <cmath>
 #include <engine/skel.hpp>
 #include <stack>
 
@@ -335,10 +334,10 @@ skel::interpolation_params::interpolation_params(
 
 skel::pose::pose()
 {
-    clear();
+    reset();
 }
 
-void skel::pose::clear()
+void skel::pose::reset()
 {
     transforms.resize(0);
     weights.resize(0);

@@ -195,7 +195,7 @@ class pose
         size_t begin;
         size_t size;
     };
-    void clear();
+    void reset();
     void start(const skel::armature &armature);
     slice append_matrices(std::vector<vec::fmat4> &out);
     void accumulate(const std::string &root_name,
